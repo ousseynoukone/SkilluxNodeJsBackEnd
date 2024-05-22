@@ -39,21 +39,21 @@ function applyRelationShip() {
     Moderation.belongsTo(Post)
 
 
-  // User can follow many users
-  User.belongsToMany(User, {
-    through: UserFollowing,
-    as: 'following',
-    foreignKey: 'followerId',
-    otherKey: 'followedId'
-  });
+    // User can follow many users
+    User.belongsToMany(User, {
+        through: UserFollowing,
+        as: 'following',
+        foreignKey: 'followerId',
+        otherKey: 'followingId'
+    });
 
-  // User can be followed by many users
-  User.belongsToMany(User, {
-    through: UserFollowing,
-    as: 'followers',
-    foreignKey: 'followedId',
-    otherKey: 'followerId'
-  });
+    // User can be followed by many users
+    User.belongsToMany(User, {
+        through: UserFollowing,
+        as: 'followers',
+        foreignKey: 'followingId',
+        otherKey: 'followerId'
+    });
 
 
 

@@ -1,9 +1,3 @@
-// - id : int
-// - userIDMod
-// - postID: int
-// + motif: str
-// - createdAt : date
-
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const { sequelize } = require("../db/db");
 
@@ -26,7 +20,7 @@ Moderation.init({
     sequelize,
     modelName: 'moderation'
   }
-  
+
 
 );
 
