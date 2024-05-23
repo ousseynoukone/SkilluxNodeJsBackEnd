@@ -5,7 +5,6 @@ const Category = require("../models/Catergory");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
 const Moderation = require("../models/Moderation");
-const UserFollowing = require("../models/UserFollowing");
 
 function applyRelationShip() { 
     // One to many Category / Post (POST HAS ONE CATEGORY AND CATEGORY BELONG TO MANY POST)
@@ -41,7 +40,7 @@ function applyRelationShip() {
 
     // User can follow many users
     User.belongsToMany(User, {
-        through: UserFollowing,
+        through: 'user_followings',
         as: 'following',
         foreignKey: 'followerId',
         otherKey: 'followingId'
@@ -49,7 +48,7 @@ function applyRelationShip() {
 
     // User can be followed by many users
     User.belongsToMany(User, {
-        through: UserFollowing,
+        through: 'user_followings',
         as: 'followers',
         foreignKey: 'followingId',
         otherKey: 'followerId'
