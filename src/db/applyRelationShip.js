@@ -55,6 +55,9 @@ function applyRelationShip() {
     });
 
 
+    // HAS : Hand his primary key to one or many
+
+    // BelongTo : Receive one or many Others key 
 
 }
 
