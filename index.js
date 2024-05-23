@@ -23,7 +23,7 @@ app.listen(PORT, async () => {
     await sequelize.authenticate();
     console.log('Connection has been established successfully.');
     applyRelationShip()
-    await sequelize.sync({ force: true });
+    await sequelize.sync();
     //{ force: true }
   } catch (error) {
     console.error('Unable to connect to the database:', error);

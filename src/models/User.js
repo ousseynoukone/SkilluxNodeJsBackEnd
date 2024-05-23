@@ -35,6 +35,8 @@ User.init({
     birth : {
         type : DataTypes.DATEONLY,
         allowNull : false,
+        unique : false
+
     },
     password : {
         type : DataTypes.STRING,
