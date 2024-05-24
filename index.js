@@ -25,7 +25,7 @@ app.listen(PORT, async () => {
   console.log('Swagger UI Express server is running on http://localhost:5050/api-docs');
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    console.log('Database connection has been established successfully.');
     applyRelationShip()
     await sequelize.sync();
     //{ force: true }
