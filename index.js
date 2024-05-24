@@ -44,8 +44,8 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 ////////////////////////////////////////////////////////// ENDPOINTS ///////////////////////////////////////////////////////////////////////////////
 
 // AUTH ENDPOINTS
-app.post("/api/v1/auth/login", userLoginValidator, login);
 app.post("/api/v1/auth/register", userRegisterValidator, register);
+app.post("/api/v1/auth/login", userLoginValidator, login);
 app.post("/api/v1/auth/forgot-password",forgotPasswword);
 app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);
 app.post("/api/v1/auth/reset-password",resetPassword);

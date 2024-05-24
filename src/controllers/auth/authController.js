@@ -19,6 +19,7 @@ const { renderHtmlResetPasswordForm } = require("../mailSender/html");
 
 // FOR CACHING THE RESET PASSWORD TOKEN
 const NodeCache = require( "node-cache" ); 
+const RegisterDto = require("../../models/dtos/registerDto");
 const myCache = new NodeCache();
 
 
@@ -49,6 +50,28 @@ function generateRefreshToken(user) {
 
 
 exports.login = async (req, res)=>{ 
+    /* #swagger.requestBody = {
+            required: true,
+            content: {
+                "application/json": {
+                    schema: { $ref: "#/components/schemas/LoginDto" },
+                }
+            }
+        }
+        #swagger.description = 'Login endpoint'
+    */
+
+    /* #swagger.responses[200] = {
+            description: "When login is successful",
+            content: {
+                "application/json": {
+                    schema:{
+                        $ref: "#/components/schemas/LoginResponseDto"
+                    }
+                }           
+            }
+        }   
+    */
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -87,7 +110,7 @@ exports.login = async (req, res)=>{
   catch (error) {
     console.log(error)
 
-     res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ error: error.toString()});
   }
 
 }
@@ -98,6 +121,30 @@ exports.login = async (req, res)=>{
 
 
 exports.register = async (req, res) => {
+      /* #swagger.requestBody = {
+            description: "Register endpoint",
+            required: true,
+            content: {
+                "application/json": {
+                    schema: { $ref: "#/components/schemas/RegisterDto" },
+                }
+            }
+        }
+        #swagger.description = 'Register endpoint'
+    */
+
+    /* #swagger.responses[200] = {
+            description: "When registering is successful",
+            content: {
+                "application/json": {
+                    schema:{
+                        $ref: "#/components/schemas/RegisterResponseDto"
+                    }
+                }           
+            }
+        }   
+    */
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -124,13 +171,15 @@ exports.register = async (req, res) => {
       if(!isOldEnough(birth)){
         return res.status(400).json({ error: 'Age does not met the minimum requirement.'});
       }
+      const registerDto = RegisterDto.fromBody(req.body)
 
-      const user = await  User.create(req.body);
+      const user = await  User.create(registerDto);
       return res.status(201).json({ success: 'Registration successful', user });
 
       } 
     catch (error) {
-       res.status(500).json({ error: 'Registration failed' });
+      console.log(error)
+       res.status(500).json({ error: error.toString()});
     }
 
   };
@@ -149,7 +198,7 @@ exports.refreshToken = async (req, res)=>{
   res.status(201).json({"sucess":'Token refreshed ! ',"token" : token,"expire":refreshTokenExpire});
 }catch (error) {
   console.log(error);
-  res.status(500).send('Error while refreshing token');
+  res.status(500).json({ error: error.toString()});
 }
 
 }
@@ -183,8 +232,8 @@ exports.forgotPasswword = async (req, res)=>{
       res.status(200).send('Check your email for instructions on resetting your password');
   } catch (error) {
       console.log(error);
-      res.status(500).send('Error sending email');
-  }
+      res.status(500).json({ error: error.toString()});
+    }
 
 
 }
@@ -241,7 +290,7 @@ exports.resetPassword = async (req, res)=>{
 
   } catch (error) {
     console.log(error)
-    return  res.status(400).send('Error while updating password !');
+    res.status(500).json({ error: error.toString()});
   }
 }
 
@@ -273,7 +322,7 @@ exports.changePassword = async(req,res)=>{
   return  res.status(201).send('Password Updated ! ');
   } catch (error) {
   console.log(error)
-  return  res.status(500).json({ error: "Something unexpected has occured ! " });
-  }
+  return res.status(500).json({ error: error.toString()});
+}
   
 }

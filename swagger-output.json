@@ -1,22 +1,66 @@
 {
-  "swagger": "2.0",
+  "openapi": "3.0.0",
   "info": {
+    "version": "3.0.0",
     "title": "SKLLUX API",
-    "description": "The API for Skillux app",
-    "version": "1.0.0"
+    "description": "The API for Skillux app"
   },
-  "host": "localhost:5050",
-  "basePath": "/",
-  "schemes": [
-    "http"
+  "servers": [
+    {
+      "url": "http://localhost:5050/"
+    }
   ],
   "paths": {
-    "/api/v1/auth/login": {
+    "/api/v1/auth/register": {
       "post": {
-        "description": "",
+        "description": "Register endpoint",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "When registering is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponseDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "description": "Register endpoint",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "description": "Login endpoint",
+        "responses": {
+          "200": {
+            "description": "When login is successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -43,62 +87,9 @@
         }
       }
     },
-    "/api/v1/auth/register": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "password": {
-                  "example": "any"
-                },
-                "birth": {
-                  "example": "any"
-                },
-                "username": {
-                  "example": "any"
-                },
-                "email": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
     "/api/v1/auth/forgot-password": {
       "post": {
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -108,6 +99,20 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -120,7 +125,9 @@
             "name": "token",
             "in": "path",
             "required": true,
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -136,38 +143,38 @@
     "/api/v1/auth/reset-password": {
       "post": {
         "description": "",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "email": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "token": {
-                  "example": "any"
-                }
-              }
-            }
-          }
-        ],
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
           },
           "401": {
             "description": "Unauthorized"
           },
           "404": {
             "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "example": "any"
+                  },
+                  "password": {
+                    "example": "any"
+                  },
+                  "token": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -179,21 +186,8 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
             "schema": {
-              "type": "object",
-              "properties": {
-                "newPassword": {
-                  "example": "any"
-                },
-                "oldPassword": {
-                  "example": "any"
-                }
-              }
+              "type": "string"
             }
           }
         ],
@@ -213,6 +207,23 @@
           "500": {
             "description": "Internal Server Error"
           }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "newPassword": {
+                    "example": "any"
+                  },
+                  "oldPassword": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -223,7 +234,9 @@
           {
             "name": "authorization",
             "in": "header",
-            "type": "string"
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -248,10 +261,156 @@
   },
   "components": {
     "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "example": 2
+          },
+          "fullName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "username": {
+            "type": "string",
+            "example": "john12"
+          },
+          "email": {
+            "type": "string",
+            "example": "john12@gmail.com"
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "example": false
+          },
+          "profilePicture": {},
+          "updatedAt": {
+            "type": "string",
+            "example": "2024-05-24T17:19:47.472Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-05-24T17:19:47.472Z"
+          },
+          "profession": {},
+          "password": {
+            "type": "string",
+            "example": "$2b$10$V7c9I6/P5nh79jfg7F8B9urb4K0wxpgR6rEIAKo9fny9F4f2T6OrW"
+          },
+          "birth": {
+            "type": "string",
+            "example": "2011/12/23"
+          }
+        },
+        "required": [
+          "fullName",
+          "username",
+          "email",
+          "password",
+          "birth"
+        ]
+      },
       "LoginDto": {
-        "$username": "John Doe",
-        "$password": "passer123",
-        "email": "test@gmail.com"
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "john12"
+          },
+          "password": {
+            "type": "string",
+            "example": "passer123"
+          },
+          "email": {
+            "type": "string",
+            "example": "john12@gmail.com"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "string",
+            "example": "Login successful"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "number",
+                "example": 2
+              },
+              "fullName": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "username": {
+                "type": "string",
+                "example": "john12"
+              },
+              "email": {
+                "type": "string",
+                "example": "john12@gmail.com"
+              },
+              "isAdmin": {
+                "type": "boolean",
+                "example": false
+              },
+              "profilePicture": {}
+            }
+          },
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJoZWxsZmVlZm8iLCJlbWFpbCI6Im91c3NleW5vdTc4MTIyN0BnbWFpbC5jb20iLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzE2NTY5OTYwLCJleHAiOjE3MTY1NzA4NjB9.B7zHEPJdosR0JAhHHtJpcYXPRvnfLxrNtqGJ48RVT0Y"
+          },
+          "expire": {
+            "type": "string",
+            "example": "15m"
+          }
+        }
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "john12"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "password": {
+            "type": "string",
+            "example": "passer123"
+          },
+          "email": {
+            "type": "string",
+            "example": "john12@gmail.com"
+          },
+          "birth": {
+            "type": "string",
+            "example": "2012-04-04"
+          }
+        }
+      },
+      "RegisterResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "string",
+            "example": "Registration successful"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
       }
     }
   }
