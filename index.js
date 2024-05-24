@@ -4,6 +4,9 @@ const applyRelationShip = require("./src/db/applyRelationShip")
 const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken} = require("./src/controllers/auth/authController")
 const { userRegisterValidator, userLoginValidator } = require('./src/controllers/validators/validators');
 const authenticateToken  = require("./src/controllers/auth/authMiddleWare")
+// Swagger
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger-output.json');
 
 
 const app = express();
@@ -19,6 +22,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, async () => {
   console.log("Server running on port "+PORT);
+  console.log('Swagger UI Express server is running on http://localhost:5050/api-docs');
   try {
     await sequelize.authenticate();
     console.log('Connection has been established successfully.');
@@ -31,6 +35,8 @@ app.listen(PORT, async () => {
 });
 
 
+// enable Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
 

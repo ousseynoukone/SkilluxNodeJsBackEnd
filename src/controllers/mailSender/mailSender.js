@@ -24,8 +24,8 @@ class MailSender {
         return {
             from: EMAIL,
             to: this.targetEmail,
-            subject: 'Password Reset',
-            text: `Click the following link to reset your password: http://localhost:5050/api/v1/auth/reset-password/${this.token}`,
+            subject: 'SKILLUX PASSWORD RESET',
+            text: `Click the following link to reset your password: http://localhost:5050/api/v1/auth/reset-password/${this.token} ,this link won't be available after 5mn.`,
         };
     }
 

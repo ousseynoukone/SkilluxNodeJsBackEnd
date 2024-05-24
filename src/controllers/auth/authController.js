@@ -47,6 +47,7 @@ function generateRefreshToken(user) {
 
 
 
+
 exports.login = async (req, res)=>{ 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -55,6 +56,8 @@ exports.login = async (req, res)=>{
 
   try {
     const loginDto = LoginDto.fromBody(req.body);
+
+    
     if(!loginDto.username && !loginDto.email){
       return res.status(401).json({ error: 'At least one among username and email should be provided'});
     }
@@ -133,7 +136,9 @@ exports.register = async (req, res) => {
   };
 
 
-// Refresh token
+
+
+
 exports.refreshToken = async (req, res)=>{ 
   try {
   const user = await User.findOne({where:{email:req.user.email}})
@@ -148,6 +153,8 @@ exports.refreshToken = async (req, res)=>{
 }
 
 }
+
+
 
 
 
@@ -166,8 +173,9 @@ exports.forgotPasswword = async (req, res)=>{
   const mailSender = new MailSender(token, user.email);
 
   //Caching token and email for 5 minutes
-  myCache.set("token",token,10000)
-  myCache.set("email",user.email,10000)
+  myCache.set("token",token,300)
+  myCache.set("email",user.email,300)
+  
 
   try {
 
@@ -182,6 +190,8 @@ exports.forgotPasswword = async (req, res)=>{
 }
 
 
+
+
 exports.resetPasswwordPageRenderer = async (req, res)=>{ 
   const { token } = req.params;
   const cachedToken = myCache.get("token");
@@ -189,27 +199,54 @@ exports.resetPasswwordPageRenderer = async (req, res)=>{
   // Check if the token exists and is still valid
   if (cachedToken === token) {
     // Render a form for the user to enter a new password
-    const htmlContent = renderHtmlResetPasswordForm(cachedEmail);
+    const htmlContent = renderHtmlResetPasswordForm(cachedEmail,token);
     res.send(htmlContent); // Send the HTML content as the response
 
   } else {
-   return res.status(404).send('Invalid or expired token');
+   return res.status(401).send('Invalid or expired token');
   }
 
 }
+
 
 
 
 exports.resetPassword = async (req, res)=>{ 
-  const user = User.findOne({where:{email:req.body.email}})
-  const newPassword = req.body.password
-  if(!user){
-  return  res.status(404).send('USER NOT FOUND');
+  
+  console.log(req.body.email)
+  console.log(req.body.password)
+  console.log( req.body.token)
+
+  try {
+    const user = await User.findOne({where:{email:req.body.email}})
+    const newPassword = req.body.password
+    const token = req.body.token
+    const cachedToken = myCache.take("token");
+
+
+    if(!user){
+      return  res.status(404).send('USER NOT FOUND');
+    }
+    if(!token){
+      return res.status(401).send('Missing token :)');
+    }
+
+    if(token!=cachedToken){
+      return res.status(401).send('Invalid or expired token');
+    }
+
+    user.password = await bcrypt.hash(newPassword,10)
+    user.save()
+    return  res.status(201).send('Password Updated ! ');
+
+  } catch (error) {
+    console.log(error)
+    return  res.status(400).send('Error while updating password !');
   }
-  user.password = await bcrypt.hash(newPassword,10)
-  user.save()
-  return  res.status(201).send('Password Updated ! ');
 }
+
+
+
 
 
 
