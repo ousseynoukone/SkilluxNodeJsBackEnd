@@ -12,11 +12,25 @@ function applyRelationShip() {
     Post.belongsTo(Category);
 
     // One to Many Section / Post (Post HAS MANY SECTION)
-    Post.hasMany(Section);
+    Post.hasMany(Section, {
+        foreignKey: {
+            allowNull: false, // Ensures a section cannot exist without a post
+        },
+        onDelete: 'CASCADE', // Deletes associated sections when a post is deleted
+        onUpdate: 'CASCADE'
+    });
     Section.belongsTo(Post);
 
+
+    // One to Many Section / Post (User HAS MANY Post)
+    User.hasMany(Post);
+    Post.belongsTo(User);
+
     // One post has many comments and one comments belongs to one post
-    Post.hasMany(Comment)
+    Post.hasMany(Comment, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    })
     Comment.belongsTo(Post)
 
     // One Comment belong to one user and one user has many comment

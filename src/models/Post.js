@@ -9,10 +9,6 @@ Post.init({
         autoIncrement: true,
         primaryKey: true
     },
-    userID: {
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
     title: {
         type: DataTypes.STRING,
         allowNull: false
@@ -40,6 +36,8 @@ Post.init({
     sequelize,
     modelName: 'post'
 })
+
+
 
 module.exports = Post;
 
