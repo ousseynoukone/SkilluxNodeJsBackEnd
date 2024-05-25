@@ -28,7 +28,7 @@ function buildCommentNode(comment) {
             commentTree[comment.id] = node
             
         }else{
-            // If there's a parentID, add this node to the parent's children array
+            // If there's a parentID, add this node to the parent's children array (if u dont undertand how , u definitly gotta learn again notion of pointer and references)
             const parentNode = commentNodes[comment.parentID];
             if (parentNode) {
                 parentNode.children.push(node);
