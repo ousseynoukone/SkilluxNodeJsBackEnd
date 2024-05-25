@@ -5,7 +5,7 @@ const LoginDto =  require("../../models/dtos/loginDto")
 const { validationResult } = require('express-validator');
 const isOldEnough = require("./helper")
 const bcrypt = require('bcrypt');
-const getUserResponse = require("../../models/dtos/userLoginResponseDto")
+const getLoginResponseDto = require("../../models/dtos/userLoginResponseDto")
 const jwt = require('jsonwebtoken');
 const { where } = require("sequelize");
 const crypto = require('crypto');
@@ -102,9 +102,9 @@ exports.login = async (req, res)=>{
     }
 
     const token = generateAccessToken(user)
-    const userResponse = getUserResponse(user)
+    const userResponse = getLoginResponseDto(user)
 
-    return res.status(200).json({ success: 'Login successful', user :userResponse,token:token ,"expire":accessTokenExpire} );
+    return res.status(200).json({ success: 'Login successful', user:userResponse,token:token ,"expire":accessTokenExpire} );
 
     } 
   catch (error) {
@@ -189,6 +189,10 @@ exports.register = async (req, res) => {
 
 
 exports.refreshToken = async (req, res)=>{ 
+      /* #swagger.security = [{
+            "bearerAuth": []
+    }] */
+
   try {
   const user = await User.findOne({where:{email:req.user.email}})
   if(!user){
@@ -262,9 +266,6 @@ exports.resetPasswwordPageRenderer = async (req, res)=>{
 
 exports.resetPassword = async (req, res)=>{ 
   
-  console.log(req.body.email)
-  console.log(req.body.password)
-  console.log( req.body.token)
 
   try {
     const user = await User.findOne({where:{email:req.body.email}})
@@ -301,6 +302,10 @@ exports.resetPassword = async (req, res)=>{
 
 
 exports.changePassword = async(req,res)=>{
+        /* #swagger.security = [{
+            "bearerAuth": []
+        }] 
+        */
 
   try {
     const user = await User.findOne({where:{email:req.user.email}})
@@ -308,8 +313,10 @@ exports.changePassword = async(req,res)=>{
     return  res.status(404).send('USER NOT FOUND');
   } 
     
-  const newPassword = req.body.newPassword
+
   const oldPassword = req.body.oldPassword
+    const newPassword = req.body.newPassword
+
   const passwordMatch = await bcrypt.compare(oldPassword, user.password);
     
   if (!passwordMatch) {

@@ -1,5 +1,13 @@
 
-const swaggerAutogen = require('swagger-autogen')({openapi: '3.0.0'});
+
+
+const options = {
+  openapi: '3.0.0',
+  autoHeaders:  false , // Enable/Disable automatic headers recognition.  By default is true
+  autoQuery:  true      // Enable/Disable automatic query recognition.    By default is true
+};
+
+const swaggerAutogen = require('swagger-autogen')(options);
 
 const doc = {
   info: {
@@ -52,7 +60,15 @@ const doc = {
           user: { "$ref": "#/components/schemas/User" }
 
         }
-    }
+    },
+
+    securitySchemes:{
+      bearerAuth: {
+          type: 'http',
+          scheme: 'bearer'
+      }
+  }
+
   },
   host: 'localhost:5050'
 };

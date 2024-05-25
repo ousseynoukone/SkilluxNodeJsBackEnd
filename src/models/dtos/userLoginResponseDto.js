@@ -1,5 +1,5 @@
 // Function to get user response
-function getUserResponse(user) {
+function getLoginResponseDto(user) {
     return {
         id: user.id,
         fullName: user.fullName,
@@ -10,4 +10,4 @@ function getUserResponse(user) {
     };
 }
 
-module.exports =  getUserResponse
+module.exports =  getLoginResponseDto
