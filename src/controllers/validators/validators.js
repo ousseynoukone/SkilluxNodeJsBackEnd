@@ -192,7 +192,12 @@ const commentUpdateValidator = [
 
 
 
-
+const moderationValidator = [
+  body('motif').notEmpty().withMessage('Motif is required').isString().withMessage('Motif should be string'),
+  body('decision').optional().isBoolean().withMessage('Decision should be boolean'),
+  body('userId').notEmpty().withMessage('User ID is required').isInt().withMessage('User ID must be an integer'),
+  body('postId').notEmpty().withMessage('Post ID is required').isInt().withMessage('Post ID must be an integer')
+];
 
 
 
@@ -200,7 +205,7 @@ const commentUpdateValidator = [
 
 module.exports = { userRegisterValidator, userLoginValidator,postAddingValidator,
   categoryAddingValidator,postUpdateValidator ,categoryUpdateValidator,sectionAddingValidator,
-  sectionUpdateValidator,commentAddingValidator,commentUpdateValidator
+  sectionUpdateValidator,commentAddingValidator,commentUpdateValidator,moderationValidator
 
 };
 

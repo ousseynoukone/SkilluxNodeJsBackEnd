@@ -10,7 +10,7 @@ const {deleteSection,addSection,updateSection,getAllSections,getOneSection} = re
 const { userRegisterValidator, userLoginValidator, postAddingValidator,
   categoryAddingValidator,postUpdateValidator,categoryUpdateValidator,
   sectionAddingValidator,sectionUpdateValidator,commentAddingValidator,
-  commentUpdateValidator
+  commentUpdateValidator,moderationValidator
 } = require('./src/controllers/validators/validators');
 const authenticateToken  = require("./src/controllers/auth/authMiddleWare")
 
@@ -18,6 +18,7 @@ const authenticateToken  = require("./src/controllers/auth/authMiddleWare")
 // Swagger
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger-output.json');
+const { getAllModerations, getOneModeration, addModeration, updateModeration, deleteModeration } = require('./src/controllers/moderation/moderationCrudContrloler');
 
 
 const app = express();
@@ -38,8 +39,9 @@ app.listen(PORT, async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     applyRelationShip()
-    await sequelize.sync();
+    await sequelize.sync({ alter: true });
     //{ force: true }
+    // { alter: true }
   } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
@@ -97,5 +99,14 @@ app.get("/api/v1/auth/comments/:id",authenticateToken, getOneComment);
 app.post("/api/v1/auth/comments",authenticateToken,commentAddingValidator, addComment);
 app.put("/api/v1/auth/comments/:id",authenticateToken,commentUpdateValidator, updateComment);
 app.delete("/api/v1/auth/comments/:id",authenticateToken, deleteComment);
+
+
+
+//MODERATION ENDPOINTS//
+app.get("/api/v1/auth/post_moderations/:postId",authenticateToken , getAllModerations);
+app.get("/api/v1/auth/moderations/:id",authenticateToken, getOneModeration);
+app.post("/api/v1/auth/moderations",authenticateToken,moderationValidator, addModeration);
+app.put("/api/v1/auth/moderations/:id",authenticateToken,moderationValidator, updateModeration);
+app.delete("/api/v1/auth/moderations/:id",authenticateToken, deleteModeration);
 
 ////////////////////////////////// OPERATIONS ENDPOINTS////////////////////////////////////////////////

@@ -15,6 +15,10 @@ Moderation.init({
       type: DataTypes.STRING,
       allowNull: false
     },
+    decision:{
+      type:DataTypes.BOOLEAN,
+      defaultValue:false
+    }
   },
   {
     sequelize,
