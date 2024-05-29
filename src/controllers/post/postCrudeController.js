@@ -2,15 +2,36 @@ const Category = require("../../models/Catergory");
 const Post = require("../../models/Post");
 const { validationResult } = require('express-validator');
 const Section = require("../../models/Section");
+const Comment = require("../../models/Comment");
+const {sequelize} = require("../../db/db")
 
 exports.getAllPosts = async (req, res) => {
+    const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
+    const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+  
     try {
-        const posts = await Post.findAll({include:[Section,Category]});
-        return res.status(200).json(posts);
+      // Find all posts with associated sections, categories, and comments
+      var posts = await Post.findAll({
+        include: [
+          { model: Section },
+          { model: Category },
+          { model: Comment, attributes: ['id'] } // Include comments and get only the 'id' attribute
+        ],
+        limit,
+        offset,
+      });
+
+      var postWithNumberOfComment = posts.map(post => {
+        const commentCount = post.comments.length; // Get the length of the comments array
+        const { comments, ...postData } = post.toJSON(); // Extract the comments array and the rest of the post data
+        return { ...postData, commentCount }; // Merge the post data with the comment count
+      });
+  
+      return res.status(200).json(postWithNumberOfComment);
     } catch (error) {
-        return res.status(500).json({ error: error.toString() });
+      return res.status(500).json({ error: error.toString() });
     }
-}
+  }
 
 exports.getOnePost = async (req, res) => {
     try {

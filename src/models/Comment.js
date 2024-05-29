@@ -20,6 +20,10 @@ Comment.init({
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
+    like : {
+      type:DataTypes.INTEGER,
+      defaultValue : 0
+    }
   },
   {
     sequelize,

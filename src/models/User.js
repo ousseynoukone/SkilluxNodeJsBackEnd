@@ -45,7 +45,12 @@ User.init({
     profilePicture : {
         type : DataTypes.STRING,
         allowNull : true
-    }
+    },
+    preferredTags: {
+        type: Sequelize.ARRAY(DataTypes.STRING),
+        defaultValue: [],
+        allowNull: true,
+    },
     
 },
 {

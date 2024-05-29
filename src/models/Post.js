@@ -13,6 +13,7 @@ Post.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+
     viewNumber: {
         type: DataTypes.INTEGER,
         defaultValue: 0

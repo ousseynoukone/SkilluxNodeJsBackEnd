@@ -1,42 +1,71 @@
-function buildCommentNode(comment) { 
+function buildCommentNode(comment) {
     return {
-        id : comment.id,
-        text : comment.text,
-        postId:comment.postId,
-        userId:comment.userId,
-        parentID:comment.parentID,
-        children : []
+      id: comment.id,
+      text: comment.text,
+      postId: comment.postId,
+      userId: comment.userId,
+      parentID: comment.parentID,
+      children: []
+    };
+  }
+  
+  function countChildren(node) {
+    let count = node.children.length;
+    for (const child of node.children) {
+      count += countChildren(child);
     }
- }
-
-
- function buildCommentNodeTree(comments) {
+    return count;
+  }
+  
+  function buildCommentNodeTree(comments) {
     const commentTree = {};
     const commentNodes = {};
-
-    // Build each comment to predisposed to be nested or being the one which nest others with his children (EACH  COMMENT MIGHT BE A PARENT OR A CHILD)
+  
+    // Build each comment node
     comments.forEach(comment => {
-       commentNodes[comment.id] = buildCommentNode(comment);
+      commentNodes[comment.id] = buildCommentNode(comment);
     });
-
-    // for each comment check if it is the top level comment (comment without parent)
+  
+    // For each comment, check if it is a top-level comment
     comments.forEach(comment => {
-        const node = commentNodes[comment.id]
-
-        if(!comment.parentID){
-
-            commentTree[comment.id] = node
-            
-        }else{
-            // If there's a parentID, add this node to the parent's children array (if u dont undertand how , u definitly gotta learn again notion of pointer and references)
-            const parentNode = commentNodes[comment.parentID];
-            if (parentNode) {
-                parentNode.children.push(node);
-            }
+      const node = commentNodes[comment.id];
+      if (!comment.parentID) {
+        commentTree[comment.id] = node;
+      } else {
+        // If there's a parentID, add this node to the parent's children array
+        const parentNode = commentNodes[comment.parentID];
+        if (parentNode) {
+          parentNode.children.push(node);
         }
-     });
-    //  We return the commentTree
+      }
+    });
+  
     return commentTree;
- }
+  }
 
- module.exports = buildCommentNodeTree;
+
+  function buildParentNodeWithChildrenNumber(comments) {
+    const commentTree = buildCommentNodeTree(comments);
+    const parentNodes = {};
+  
+    // Iterate over the top-level comments
+    for (const topLevelComment of Object.values(commentTree)) {
+      const parentNode = {
+        id: topLevelComment.id,
+        text: topLevelComment.text,
+        postId: topLevelComment.postId,
+        userId: topLevelComment.userId,
+        childrenCount: countChildren(topLevelComment)
+      };
+      parentNodes[topLevelComment.id] = parentNode;
+    }
+  
+    return parentNodes;
+  }
+
+ function buildChildNode(){
+
+ }
+ 
+  
+  module.exports = {buildCommentNodeTree,buildParentNodeWithChildrenNumber};
