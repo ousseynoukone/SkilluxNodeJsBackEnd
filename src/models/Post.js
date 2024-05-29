@@ -31,7 +31,11 @@ Post.init({
         type: DataTypes.STRING,
         allowNull: false
     },
-    
+    tags: {
+        type: Sequelize.ARRAY(DataTypes.STRING),
+        defaultValue: [],
+        allowNull: false,
+    },
 }
 ,{
     sequelize,

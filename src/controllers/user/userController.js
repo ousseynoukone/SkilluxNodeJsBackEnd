@@ -1,16 +1,19 @@
 const User = require("../../models/User");
+const { Op } = require('sequelize');
 
-const updateUserTagsPreferences = async () => {
+exports.updateUserTagsPreferences = async (req, res) => {
     const userId = req.body.userId;
-    const tags = req.body.tags;
+    const userPreferredTags = req.body.tags;
+  
     try {
-        const user = await User.findByPk(userId);
-        user.preferredTags = tags;
-        await user.save();
-        return res.status(200).json({ success: "User Preference  updated!", post });
-
+      var user = await User.findByPk(userId);
+  
+      user.preferredTags = userPreferredTags;
+      await user.save();
+  
+      res.status(200).json({ success: 'User tag preferences updated successfully' });
     } catch (error) {
-        return res.status(500).json({ error: error.toString() });
+      console.error(error);
+      res.status(500).json({ error: 'An error occurred while updating user tag preferences' });
     }
-
   };

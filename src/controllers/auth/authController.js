@@ -29,7 +29,8 @@ function generateAccessToken(user) {
     id: user.id,
     username: user.username,
     email: user.email,
-    isAdmin: user.isAdmin
+    isAdmin: user.isAdmin,
+    preferredTags: user.preferredTags
 };
   return jwt.sign( payload , accessTokenSecret, { expiresIn: accessTokenExpire });
 }
@@ -40,7 +41,9 @@ function generateRefreshToken(user) {
     id: user.id,
     username: user.username,
     email: user.email,
-    isAdmin: user.isAdmin
+    isAdmin: user.isAdmin,
+    preferredTags: user.preferredTags
+
 };
 
   return jwt.sign(payload, accessTokenSecret, { expiresIn: refreshTokenExpire });

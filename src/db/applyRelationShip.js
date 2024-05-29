@@ -1,20 +1,12 @@
 //APPLY RELATIONSHIP 
 const Post = require("../models/Post");
 const Section = require("../models/Section");
-const Category = require("../models/Catergory");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
 const Moderation = require("../models/Moderation");
-const Tag = require("../models/Tag");
 
 function applyRelationShip() { 
-    // One to many Category / Post (POST HAS ONE CATEGORY AND CATEGORY BELONG TO MANY POST)
-    Category.hasMany(Post);
-    Post.belongsTo(Category);
 
-    // MANY TO MANY BETWEN TAGS AND POSTS
-    Tag.belongsToMany(Post,{through :'post_tags'})
-    Post.belongsToMany(Tag,{through :'post_tags'})
 
     // One to Many Section / Post (Post HAS MANY SECTION)
     Post.hasMany(Section, {

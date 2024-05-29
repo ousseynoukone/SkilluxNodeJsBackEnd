@@ -29,9 +29,6 @@ const postAddingValidator = [
   body('title')
     .notEmpty().withMessage('Title is required')
     .isLength({ min: 1, max: 255 }).withMessage('Title must be between 1 and 255 characters'),
-  body('categoryId')
-    .notEmpty().withMessage('Category is required')
-    .isInt().withMessage('Category must be an integer'),
     
     
   body('viewNumber')
@@ -45,8 +42,14 @@ const postAddingValidator = [
     .isBoolean().withMessage('isPublished must be a boolean'),
   body('headerImage')
     .notEmpty().withMessage('Header Image is required')
-    .isString().withMessage('Header Image must be a string')
+    .isString().withMessage('Header Image must be a string'),
+  body('tags')
+    .notEmpty().withMessage('Tags array is required')
+    .isArray().withMessage('Tags should be an array')
 ]
+
+
+
 
 
 
@@ -59,9 +62,9 @@ const postUpdateValidator = [
     .optional()
     .isLength({ min: 1, max: 255 }).withMessage('Title must be between 1 and 255 characters'),
 
-  body('categoryId')
-    .optional() 
-    .isInt().withMessage('Category must be an integer'),
+  // body('categoryId')
+  //   .optional() 
+  //   .isInt().withMessage('Category must be an integer'),
 
     
   body('viewNumber')
@@ -75,14 +78,26 @@ const postUpdateValidator = [
     .isBoolean().withMessage('isPublished must be a boolean'),
   body('headerImage')
     .optional()
-    .isString().withMessage('Header Image must be a string')
+    .isString().withMessage('Header Image must be a string'),
+
+  body('tags')
+    .optional()
+    .isArray().withMessage('Tags should be an array')
 ]
 
 
 
 
 
-
+const updateUserTagsPreferencesValidator = [
+  body('userId')
+    .notEmpty().withMessage('User ID is required')
+    .isInt().withMessage('UserID must be an integer'),
+  body('tags')
+    .notEmpty().withMessage('Tags array is required')
+    .isArray().withMessage('Tags should be an array')
+    
+  ]
 
 
 const categoryAddingValidator = [
@@ -205,7 +220,8 @@ const moderationValidator = [
 
 module.exports = { userRegisterValidator, userLoginValidator,postAddingValidator,
   categoryAddingValidator,postUpdateValidator ,categoryUpdateValidator,sectionAddingValidator,
-  sectionUpdateValidator,commentAddingValidator,commentUpdateValidator,moderationValidator
+  sectionUpdateValidator,commentAddingValidator,commentUpdateValidator,moderationValidator,
+  updateUserTagsPreferencesValidator
 
 };
 
