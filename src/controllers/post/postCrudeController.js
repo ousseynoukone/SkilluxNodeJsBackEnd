@@ -2,10 +2,10 @@ const Post = require("../../models/Post");
 const { validationResult } = require('express-validator');
 const Section = require("../../models/Section");
 const Comment = require("../../models/Comment");
-const {sequelize} = require("../../db/db");
 const { checkForTags } = require("./postController");
 const { Op } = require('sequelize');
-const { user } = require("pg/lib/defaults");
+const User = require("../../models/User");
+const {sequelize} =  require("../../db/db")
 
 
 
@@ -70,6 +70,77 @@ exports.getFollowedTagsPost = async (req, res) => {
 };
 
 
+
+
+// Function to get followed user posts with cursor pagination
+exports.getFollowedUserPost = async (req, res) => {
+  try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
+    // Extract user ID from the authenticated request
+    const userId = req.user.id;
+
+    // Find the user by their ID
+    const user = await User.findByPk(userId);
+
+    // If user does not exist, return 404 error
+    if (!user) {
+      return res.status(404).json({ error: "USER NOT FOUND" });
+    }
+
+    // Get the IDs of users followed by the authenticated user
+    const followedUsers = await user.getFollowing().then(users => {
+      return users.map(user => user.id);
+    });
+
+    // Construct the query for finding posts
+    const followedUserPostsQuery = {
+      include: [
+        { model: Section },
+        { model: Comment, attributes: ['id'] },
+      ],
+      limit: limit,
+      where: {
+        [Op.and]: [
+          { userId: { [Op.in]: followedUsers } },
+          cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+    };
+
+    // Execute the query to retrieve followed user posts
+    const followedUserPosts = await Post.findAll(followedUserPostsQuery);
+
+    // Transform results to include the number of comments
+    const postsWithNumberOfComments = followedUserPosts.map(post => {
+      const commentCount = post.comments.length;
+      const { comments, ...postData } = post.toJSON();
+      return { ...postData, commentCount };
+    });
+
+    // Determine the next cursor
+    const nextCursor =
+      followedUserPosts.length > 0
+        ? followedUserPosts[followedUserPosts.length - 1].createdAt
+        : null;
+
+    // Send the response
+    return res.status(200).json({
+      posts: postsWithNumberOfComments,
+      nextCursor,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
 
   
 
@@ -145,6 +216,56 @@ exports.getNoFollowedTagsPost = async (req, res) => {
 
 
 
+// Get posts by tag search
+exports.searchPostByTags = async (req, res) => {
+  try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
+    // Extract tags from request parameters
+    const tags = req.params.tags.split(','); // Split the tags string into an array
+
+    if (!tags || tags.length === 0) {
+      return res.status(404).json({ error: "No tags found as parameters" });
+    }
+
+    // Construct the tags condition for the raw query
+    const tagsCondition = tags.map(tag => `ARRAY_TO_STRING(tags, ',') ILIKE '%${tag.toString()}%'`).join(' OR ');
+
+    // Construct the raw query
+    let query = `SELECT * FROM posts WHERE (${tagsCondition})`;
+    if (cursor) {
+      query += ` AND "createdAt" < :cursor`;
+    }
+    query += ` ORDER BY "createdAt" DESC LIMIT :limit`;
+
+    // Execute the raw query
+    const foundPosts = await sequelize.query(query, {
+      replacements: { cursor, limit },
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    // Determine the next cursor
+    const nextCursor =
+      foundPosts.length > 0
+        ? foundPosts[foundPosts.length - 1].createdAt
+        : null;
+
+    // Send the response
+    return res.status(200).json({
+      posts: foundPosts,
+      nextCursor,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
 
 
 
@@ -167,6 +288,7 @@ exports.addPost = async (req, res) => {
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
+        
         
         const post = await Post.create(req.body);
 

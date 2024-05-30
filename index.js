@@ -2,7 +2,7 @@ const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
 const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken} = require("./src/controllers/auth/authController")
-const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost} = require("./src/controllers/post/postCrudeController")
+const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost, getFollowedUserPost, searchPostByTags} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
 
@@ -20,7 +20,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger-output.json');
 const { getAllModerations, getOneModeration, addModeration, updateModeration, deleteModeration } = require('./src/controllers/moderation/moderationCrudContrloler');
-const { updateUserTagsPreferences } = require('./src/controllers/user/userController');
+const { updateUserTagsPreferences, getUserInformations, followUser, unfollowUser, getUserFollowers, getUserFollowing, getUserNbFollowers, getUserNbFollowing, searchUser } = require('./src/controllers/user/userController');
 
 
 const app = express();
@@ -71,9 +71,14 @@ app.post("/api/v1/auth/refresh-token",authenticateToken,refreshToken);
 
 ///////////////////////////// CRUD ENDPOINTS ////////////////////////////////////////////////
 
-//POST CRUD//
+//POST ENDPOINTS//
+app.get("/api/v1/basic/followed-user-posts/:limit/:cursor",authenticateToken , getFollowedUserPost);
 app.get("/api/v1/basic/recommanded-posts/:limit/:cursor",authenticateToken , getFollowedTagsPost);
 app.get("/api/v1/basic/random-posts/:limit/:cursor",authenticateToken , getNoFollowedTagsPost);
+
+app.get("/api/v1/basic/search-posts/:tags/:limit/:cursor",authenticateToken ,searchPostByTags);
+
+
 app.get("/api/v1/basic/posts/:id",authenticateToken, getOnePost);
 app.post("/api/v1/basic/posts",authenticateToken,postAddingValidator, addPost);
 app.put("/api/v1/basic/posts/:id",authenticateToken,postUpdateValidator, updatePost);
@@ -112,15 +117,25 @@ app.delete("/api/v1/basic/moderations/:id",authenticateToken, deleteModeration);
 
 
 // // Follow/Unfollow Endpoints
-// app.post("/api/v1/basic/users/:id/follow", authenticateToken, followUser);
-// app.delete("/api/v1/basic/users/:id/follow", authenticateToken, unfollowUser);
+app.post("/api/v1/basic/users/follow/:id", authenticateToken, followUser);
+app.post("/api/v1/basic/users/unfollow/:id", authenticateToken, unfollowUser);
 
-// // Retrieve Followers and Following Lists
-// app.get("/api/v1/auth/users/:id/followers", authenticateToken, getUserFollowers);
-// app.get("/api/v1/auth/users/:id/following", authenticateToken, getUserFollowing);
+// Retrieve Followers and Following Lists
+app.get("/api/v1/basic/users/followers", authenticateToken, getUserFollowers);
+app.get("/api/v1/basic/users/following", authenticateToken, getUserFollowing);
+
+// Followers and Following number
+app.get("/api/v1/basic/users/nb_followers", authenticateToken, getUserNbFollowers);
+app.get("/api/v1/basic/users/nb_following", authenticateToken, getUserNbFollowing);
+
+
 
 // Update User preferences
 app.post("/api/v1/basic/update_user_preferences",authenticateToken,updateUserTagsPreferencesValidator,updateUserTagsPreferences)
+// Get user information
+app.get("/api/v1/basic/users/:id",authenticateToken,getUserInformations)
 
-// Search Endpoints
-// app.get("/api/v1/auth/search", authenticateToken, searchContent);
+// SEARCH BY USER 
+app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken ,searchUser);
+
+
