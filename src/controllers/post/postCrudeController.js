@@ -7,69 +7,136 @@ const { checkForTags } = require("./postController");
 const { Op } = require('sequelize');
 const { user } = require("pg/lib/defaults");
 
-exports.getAllPosts = async (req, res) => {
-    const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
-    const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+
+
+// FUNCTION TO GET WITH CURSOR PAGINATION  FOLLOWED TAGS'S POST
+exports.getFollowedTagsPost = async (req, res) => {
+  try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+    
+    // Extract user preferences
     const userPreferences = req.user.preferredTags || [];
-    const diversityLimit = Math.floor(limit / 4); // Limit for diverse posts
-    const preferredLimit = limit - diversityLimit; // Limit for preferred posts
 
-    try {
-        // Find posts that match user's preferred tags
-        const preferredPosts = await Post.findAll({
-            include: [
-                { model: Section },
-                { model: Comment, attributes: ['id'] } // Include comments and get only the 'id' attribute
-            ],
-            limit: preferredLimit,
-            offset,
-            where: {
-                tags: {
-                    [Op.overlap]: userPreferences // Use Op.overlap to find overlapping tags
-                }
-            }
-        });
+    // Construct the query for finding posts
+    const preferredPostsQuery = {
+      include: [
+        { model: Section },
+        { model: Comment, attributes: ['id'] },
+      ],
+      limit: limit,
+      where: {
 
-        // Extract the IDs of the preferred posts to exclude them from the diverse posts query
-        const preferredPostIds = preferredPosts.map(post => post.id);
+        [Op.and]: [
+            { tags: { [Op.overlap]: userPreferences } },
+            cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+          ],
+  
+      },
+      order: [['createdAt', 'DESC']],
+    };
 
-        // Find random posts that do not match user's preferred tags
-        const allDiversePosts = await Post.findAll({
-            include: [
-                { model: Section },
-                { model: Comment, attributes: ['id'] } // Include comments and get only the 'id' attribute
-            ],
-            limit: diversityLimit,
-            where: {
-                id: {
-                    [Op.notIn]: preferredPostIds // Exclude preferred posts by ID
-                }
-            },
-            order: sequelize.random() // Get random posts
-        });
 
-        // Filter out any posts from the diverse set that overlap with user preferences
-        const diversePosts = allDiversePosts.filter(post => {
-            return !userPreferences.some(tag => post.tags.includes(tag));
-        });
+    // Execute the query
+    const preferredPosts = await Post.findAll(preferredPostsQuery);
 
-        const allPosts = [...preferredPosts, ...diversePosts];
+    // Transform results to include the number of comments
+    const postWithNumberOfComment = preferredPosts.map(post => {
+      const commentCount = post.comments.length;
+      const { comments, ...postData } = post.toJSON();
+      return { ...postData, commentCount };
+    });
 
-        if (allPosts.length === 0) {
-            return res.status(200).json({ message: "End of feed" });
-        }
+    // Determine the next cursor
+    const nextCursor =
+      preferredPosts.length > 0
+        ? preferredPosts[preferredPosts.length - 1].createdAt
+        : null;
 
-        const postWithNumberOfComment = allPosts.map(post => {
-            const commentCount = post.comments.length; // Get the length of the comments array
-            const { comments, ...postData } = post.toJSON(); // Extract the comments array and the rest of the post data
-            return { ...postData, commentCount }; // Merge the post data with the comment count
-        });
+    // Send the response
+    return res.status(200).json({
+      posts: postWithNumberOfComment,
+      nextCursor,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
 
-        return res.status(200).json(postWithNumberOfComment);
-    } catch (error) {
-        console.error('Error fetching posts:', error);
-        return res.status(500).json({ error: error.toString() });
-    }
+
+
+  
+
+
+
+exports.getNoFollowedTagsPost = async (req, res) => {
+  try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
+    // Extract user preferences
+    const userPreferences = req.user.preferredTags || [];
+
+    // Fetch preferred post IDs separately
+    const preferredPostIds = await Post.findAll({
+      where: {
+        tags: { [Op.overlap]: userPreferences },
+      },
+      attributes: ['id'],
+    }).then(preferredPosts => preferredPosts.map(post => post.id));
+
+    // Construct the query for finding posts not matching user's preferred tags
+    const noFollowedTagsPostQuery = {
+      include: [
+        { model: Section },
+        { model: Comment, attributes: ['id'] },
+      ],
+      limit: limit,
+      where: {
+        [Op.and]: [
+          { id: { [Op.notIn]: preferredPostIds } }, // Exclude preferred posts by ID
+          cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+    };
+
+    // Execute the query
+    const noFollowedTagsPosts = await Post.findAll(noFollowedTagsPostQuery);
+
+    // Transform results to include the number of comments
+    const postsWithNumberOfComments = noFollowedTagsPosts.map(post => {
+      const commentCount = post.comments.length;
+      const { comments, ...postData } = post.toJSON();
+      return { ...postData, commentCount };
+    });
+
+    // Determine the next cursor
+    const nextCursor =
+      noFollowedTagsPosts.length > 0
+        ? noFollowedTagsPosts[noFollowedTagsPosts.length - 1].createdAt
+        : null;
+
+    // Send the response
+    return res.status(200).json({
+      posts: postsWithNumberOfComments,
+      nextCursor,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: error.toString() });
+  }
 };
 
 
@@ -77,21 +144,8 @@ exports.getAllPosts = async (req, res) => {
 
 
 
-    //   // Find all posts with associated sections, and comments number
-    //   var posts = await Post.findAll({
-    //     include: [
-    //       { model: Section },
-    //       { model: Comment, attributes: ['id'] } // Include comments and get only the 'id' attribute
-    //     ],
-    //     limit,
-    //     offset,
-    //   });
 
-    //   var postWithNumberOfComment = posts.map(post => {
-    //     const commentCount = post.comments.length; // Get the length of the comments array
-    //     const { comments, ...postData } = post.toJSON(); // Extract the comments array and the rest of the post data
-    //     return { ...postData, commentCount }; // Merge the post data with the comment count
-    //   });
+
 
 
 exports.getOnePost = async (req, res) => {

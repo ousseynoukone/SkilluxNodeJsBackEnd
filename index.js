@@ -2,7 +2,7 @@ const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
 const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken} = require("./src/controllers/auth/authController")
-const {deletePost,addPost,updatePost,getAllPosts,getOnePost} = require("./src/controllers/post/postCrudeController")
+const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
 
@@ -72,18 +72,12 @@ app.post("/api/v1/auth/refresh-token",authenticateToken,refreshToken);
 ///////////////////////////// CRUD ENDPOINTS ////////////////////////////////////////////////
 
 //POST CRUD//
-app.get("/api/v1/basic/posts/:limit/:offset",authenticateToken , getAllPosts);
+app.get("/api/v1/basic/recommanded-posts/:limit/:cursor",authenticateToken , getFollowedTagsPost);
+app.get("/api/v1/basic/random-posts/:limit/:cursor",authenticateToken , getNoFollowedTagsPost);
 app.get("/api/v1/basic/posts/:id",authenticateToken, getOnePost);
 app.post("/api/v1/basic/posts",authenticateToken,postAddingValidator, addPost);
 app.put("/api/v1/basic/posts/:id",authenticateToken,postUpdateValidator, updatePost);
 app.delete("/api/v1/basic/posts/:id",authenticateToken, deletePost);
-
-//CATEGORY ENDPOINTS//
-// app.get("/api/v1/basic/categories",authenticateToken , getAllCategories);
-// app.get("/api/v1/basic/categories/:id",authenticateToken, getOneCategory);
-// app.post("/api/v1/basic/categories",authenticateToken,categoryAddingValidator, addCategory);
-// app.put("/api/v1/basic/categories/:id",authenticateToken,categoryUpdateValidator, updateCategory);
-// app.delete("/api/v1/basic/categories/:id",authenticateToken, deleteCategory);
 
 
 //SECTION ENDPOINTS//
