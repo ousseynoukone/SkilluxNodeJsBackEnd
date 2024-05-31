@@ -2,7 +2,8 @@ const { validationResult } = require('express-validator');
 const Comment =  require("../../models/Comment")
 const { Sequelize, QueryTypes } = require('sequelize');
 const {sequelize} = require("../../db/db")
-const buildCommentNodeTree = require("./commentHelper")
+const buildCommentNodeTree = require("./commentHelper");
+const Notification = require('../../models/Notification');
 
 // Get all comments NOT USED FOR NOW
 // exports.getAllComments = async (req, res) => {
@@ -190,13 +191,32 @@ exports.getOneComment = async (req, res) => {
 
 // Add a new comment
 exports.addComment = async (req, res) => {
+
+
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-
+        // Connected User id
+        const connectedUserId = req.user.id;
+        req.body.userId  = connectedUserId
         const comment = await Comment.create(req.body);
+
+        // Notification
+        const fromUser = connectedUserId
+        const post = await comment.getPost()
+        const toUser = post.userId
+        const notification = Notification.create(
+          {
+            ressourceId:comment.id,
+            toUserId : toUser,
+            fromUserId : fromUser,
+            type : "comment"
+          }
+        )
+
+
         return res.status(201).json({ success: "Comment added!", comment });
     } catch (error) {
         return res.status(500).json({ error: error.toString() });

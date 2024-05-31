@@ -162,9 +162,7 @@ const commentAddingValidator = [
   .notEmpty().withMessage('Poste ID is required')
   .isInt().withMessage('Post ID must be an integer'),
 
-  body('userId')
-  .notEmpty().withMessage('User ID is required')
-  .isInt().withMessage('User ID must be an integer'),
+
 
   body('parentID')
   .optional()
@@ -185,9 +183,7 @@ const commentUpdateValidator = [
   .notEmpty().withMessage('Poste ID is required')
   .isInt().withMessage('Post ID must be an integer'),
 
-  body('userId')
-  .notEmpty().withMessage('User ID is required')
-  .isInt().withMessage('User ID must be an integer'),
+
 
   body('parentID')
   .optional()

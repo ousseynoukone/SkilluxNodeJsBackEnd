@@ -4,6 +4,7 @@ const Section = require("../models/Section");
 const Comment = require("../models/Comment");
 const User = require("../models/User");
 const Moderation = require("../models/Moderation");
+const Notification = require("../models/Notification");
 
 function applyRelationShip() { 
 
@@ -66,6 +67,14 @@ function applyRelationShip() {
         foreignKey: 'followingId',
         otherKey: 'followerId'
     });
+
+
+    // EACH NOTIFICATION BELONG TO ONE USRE AND EACH USER HAS MANY NOTIFICATION
+    Notification.belongsTo(User, { as: 'fromUser', foreignKey: 'fromUserId' });
+    Notification.belongsTo(User, { as: 'toUser', foreignKey: 'toUserId' });
+    
+    User.hasMany(Notification, { foreignKey: 'fromUserId', as: 'sentNotifications' });
+    User.hasMany(Notification, { foreignKey: 'toUserId', as: 'receivedNotifications' });
 
 
     // HAS : Hand his primary key to one or many

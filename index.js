@@ -21,7 +21,12 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger-output.json');
 const { getAllModerations, getOneModeration, addModeration, updateModeration, deleteModeration } = require('./src/controllers/moderation/moderationCrudContrloler');
 const { updateUserTagsPreferences, getUserInformations, followUser, unfollowUser, getUserFollowers, getUserFollowing, getUserNbFollowers, getUserNbFollowing, searchUser } = require('./src/controllers/user/userController');
+const { votePost } = require('./src/controllers/post/postController');
+const { markNotificationAsRead, getUserNotifications } = require('./src/controllers/notification/notificationController');
 
+const cron = require('node-cron');
+const { logMessage } = require('./src/helper/helper');
+const { cleanupOldNotifications } = require('./src/controllers/cronJobs/notificationCronJob');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -80,6 +85,7 @@ app.get("/api/v1/basic/search-posts/:tags/:limit/:cursor",authenticateToken ,sea
 
 
 app.get("/api/v1/basic/posts/:id",authenticateToken, getOnePost);
+app.post("/api/v1/basic/posts/vote/:id",authenticateToken, votePost);
 app.post("/api/v1/basic/posts",authenticateToken,postAddingValidator, addPost);
 app.put("/api/v1/basic/posts/:id",authenticateToken,postUpdateValidator, updatePost);
 app.delete("/api/v1/basic/posts/:id",authenticateToken, deletePost);
@@ -112,6 +118,14 @@ app.put("/api/v1/basic/moderations/:id",authenticateToken,moderationValidator, u
 app.delete("/api/v1/basic/moderations/:id",authenticateToken, deleteModeration);
 
 
+// NOTIFICATION ENDPOINTS//
+
+// Get notifications for the connected user
+app.get('/api/v1/basic/notifications', authenticateToken, getUserNotifications);
+
+// Mark a notification as read
+app.patch('/api/v1/basic/notifications/:id/read', authenticateToken,markNotificationAsRead);
+
 
 ////////////////////////////////// OPERATIONS ENDPOINTS////////////////////////////////////////////////
 
@@ -139,3 +153,20 @@ app.get("/api/v1/basic/users/:id",authenticateToken,getUserInformations)
 app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken ,searchUser);
 
 
+
+
+// ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////
+
+// BACKGROUND TASK TO CLEAN UP OLD READ NOTIFICATION
+// ┌───────────── minute (0 - 59)
+// │ ┌───────────── heure (0 - 23)
+// │ │ ┌───────────── jour du mois (1 - 31)
+// │ │ │ ┌───────────── mois (1 - 12 ou JAN-DÉC)
+// │ │ │ │ ┌───────────── jour de la semaine (0 - 6 ou DIM-SAM)
+// │ │ │ │ │
+// * * * * *  commande à exécuter
+
+cron.schedule('0 0 * * 0', async () => {
+  logMessage()
+  cleanupOldNotifications()
+});
