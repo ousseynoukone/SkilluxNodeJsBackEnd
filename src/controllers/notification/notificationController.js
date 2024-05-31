@@ -7,10 +7,23 @@ const Post = require("../../models/Post");
 // Get all notifications for the connected user
 exports.getUserNotifications = async (req, res) => {
     try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
       const userId = req.user.id;
   
       const notifications = await Notification.findAll({
-        where: { toUserId: userId },
+        where: {
+            [Op.and]: [
+              { toUserId: userId },
+              cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+            ],
+          },
+
         include: [
           {
             model: User,
@@ -19,6 +32,8 @@ exports.getUserNotifications = async (req, res) => {
           }
         ],
         order: [['createdAt', 'DESC']],
+        limit: limit,
+
       });
   
       // Utilisez Promise.all pour attendre que toutes les promesses soient résolues
@@ -35,8 +50,14 @@ exports.getUserNotifications = async (req, res) => {
   
         return notificationData;
       }));
+
+          // Determine the next cursor
+    const nextCursor =
+    populatedNotifications.length > 0
+      ? populatedNotifications[populatedNotifications.length - 1].createdAt
+      : null;
   
-      return res.status(200).json(populatedNotifications);
+      return res.status(200).json({populatedNotifications,nextCursor});
     } catch (error) {
       console.error('Error fetching notifications:', error);
       return res.status(500).json({ error: error.toString() });

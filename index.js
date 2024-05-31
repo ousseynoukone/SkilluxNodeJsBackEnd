@@ -121,7 +121,7 @@ app.delete("/api/v1/basic/moderations/:id",authenticateToken, deleteModeration);
 // NOTIFICATION ENDPOINTS//
 
 // Get notifications for the connected user
-app.get('/api/v1/basic/notifications', authenticateToken, getUserNotifications);
+app.get('/api/v1/basic/notifications/:limit/:cursor', authenticateToken, getUserNotifications);
 
 // Mark a notification as read
 app.patch('/api/v1/basic/notifications/:id/read', authenticateToken,markNotificationAsRead);
