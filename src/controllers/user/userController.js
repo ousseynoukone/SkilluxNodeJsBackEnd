@@ -1,3 +1,4 @@
+const Notification = require("../../models/Notification");
 const User = require("../../models/User");
 const { Op } = require('sequelize');
 
@@ -88,6 +89,19 @@ exports.followUser = async (req, res) => {
         // Add following relationship
         await connectedUser.addFollowing(userToFollow);
 
+
+        // Notification
+        const fromUser = connectedUserId
+        const toUser = userId
+        const notification =  Notification.create(
+          {
+            ressourceId:toUser,
+            toUserId : toUser,
+            fromUserId : fromUser,
+            type : "follow"
+          }
+        )
+
         // Send success response
         return res.status(201).json({ success: 'User Followed' });
       } else {
@@ -160,7 +174,9 @@ exports.getUserFollowers = async (req, res) => {
     // If user exists
     if (user) {
       // Retrieve the list of followers using Sequelize association method
-      const followers = await user.getFollowers();
+      const followers = await user.getFollowers({
+        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture']
+      });
 
       // Send the list of followers as response
       return res.status(200).json(followers);
@@ -185,7 +201,9 @@ exports.getUserFollowing = async (req, res) => {
     // If user exists
     if (user) {
       // Retrieve the list of following users using Sequelize association method
-      const following = await user.getFollowing();
+      const following = await user.getFollowing({
+        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture']
+      });
 
       // Send the list of following users as response
       return res.status(200).json(following);
