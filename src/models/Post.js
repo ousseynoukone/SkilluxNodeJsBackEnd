@@ -14,7 +14,7 @@ Post.init({
         allowNull: false
     },
 
-    viewNumber: {
+    readNumber: {
         type: DataTypes.INTEGER,
         defaultValue: 0
     },

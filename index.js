@@ -1,7 +1,7 @@
 const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
-const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken} = require("./src/controllers/auth/authController")
+const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout} = require("./src/controllers/auth/authController")
 const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost, getFollowedUserPost, searchPostByTags} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
@@ -27,6 +27,7 @@ const { markNotificationAsRead, getUserNotifications } = require('./src/controll
 const cron = require('node-cron');
 const { logMessage } = require('./src/helper/helper');
 const { cleanupOldNotifications } = require('./src/controllers/cronJobs/notificationCronJob');
+const { cleanupOldBlackListedToken } = require('./src/controllers/cronJobs/blackListedTokenCronJob');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -66,6 +67,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // AUTH ENDPOINTS
 app.post("/api/v1/auth/register", userRegisterValidator, register);
 app.post("/api/v1/auth/login", userLoginValidator, login);
+app.get("/api/v1/auth/logout",authenticateToken, logout);
 app.post("/api/v1/auth/forgot-password",forgotPasswword);
 app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);
 app.post("/api/v1/auth/reset-password",resetPassword);
@@ -169,4 +171,9 @@ app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken 
 cron.schedule('0 0 * * 0', async () => {
   logMessage()
   cleanupOldNotifications()
+});
+
+cron.schedule(' 0 0 * * * ', async () => {
+  cleanupOldBlackListedToken()
+  logMessage()
 });

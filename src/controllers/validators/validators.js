@@ -31,7 +31,7 @@ const postAddingValidator = [
     .isLength({ min: 1, max: 255 }).withMessage('Title must be between 1 and 255 characters'),
     
     
-  body('viewNumber')
+  body('readNumber')
     .optional()
     .isInt({ min: 0 }).withMessage('View Number must be a non-negative integer'),
   body('votesNumber')
@@ -67,7 +67,7 @@ const postUpdateValidator = [
   //   .isInt().withMessage('Category must be an integer'),
 
     
-  body('viewNumber')
+  body('readNumber')
     .optional()
     .isInt({ min: 0 }).withMessage('View Number must be a non-negative integer'),
   body('votesNumber')

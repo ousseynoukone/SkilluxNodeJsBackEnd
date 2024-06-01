@@ -5,6 +5,7 @@ const Comment = require("../models/Comment");
 const User = require("../models/User");
 const Moderation = require("../models/Moderation");
 const Notification = require("../models/Notification");
+const BlacklistedToken = require("../models/BlacklistedToken");
 
 function applyRelationShip() { 
 
@@ -19,7 +20,6 @@ function applyRelationShip() {
     });
     Section.belongsTo(Post);
 
-    
 
 
     // One to Many Section / Post (User HAS MANY Post)
@@ -76,6 +76,12 @@ function applyRelationShip() {
     User.hasMany(Notification, { foreignKey: 'fromUserId', as: 'sentNotifications' });
     User.hasMany(Notification, { foreignKey: 'toUserId', as: 'receivedNotifications' });
 
+
+
+
+    //For logOut  
+    User.hasMany(BlacklistedToken)
+    BlacklistedToken.belongsTo(User)
 
     // HAS : Hand his primary key to one or many
 

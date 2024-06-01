@@ -20,6 +20,7 @@ const { renderHtmlResetPasswordForm } = require("../mailSender/html");
 // FOR CACHING THE RESET PASSWORD TOKEN
 const NodeCache = require( "node-cache" ); 
 const RegisterDto = require("../../models/dtos/registerDto");
+const BlacklistedToken = require("../../models/BlacklistedToken");
 const myCache = new NodeCache();
 
 
@@ -120,7 +121,27 @@ exports.login = async (req, res)=>{
 
 
 
+exports.logout = async (req, res) => {
+  try {
+    // Invalidate the token in the database
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
 
+    // Add the token to a blacklist (you need to create this table)
+    await BlacklistedToken.create({
+      token: req.user.token,
+      userId: user.id,
+      tokenExpirationSecondsLeft: req.user.tokenExpirationSecondsLeft
+    });
+
+    return res.status(200).json({ success: 'Logged out successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.toString() });
+  }
+};
 
 
 exports.register = async (req, res) => {

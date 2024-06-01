@@ -6,7 +6,7 @@ const Notification = require("../../models/Notification");
 // clean up old  read notification 
 async function cleanupOldNotifications() {
     const t = await sequelize.transaction();
-    console.log("cron run")
+    
     try {
       const oneWeekAgo = new Date(Date.now() - cleanUpNotificationDate);
       const deletedCount = await Notification.destroy({
