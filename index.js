@@ -1,7 +1,7 @@
 const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
-const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout} = require("./src/controllers/auth/authController")
+const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout, deactivateAccount, deleteUser, activateAccount} = require("./src/controllers/auth/authController")
 const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost, getFollowedUserPost, searchPostByTags} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
@@ -73,6 +73,11 @@ app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);
 app.post("/api/v1/auth/reset-password",resetPassword);
 app.post("/api/v1/auth/change-password",authenticateToken,changePassword);
 app.post("/api/v1/auth/refresh-token",authenticateToken,refreshToken);
+
+// For moderator and User
+app.get("/api/v1/auth/deactivate-account/:userId",authenticateToken, deactivateAccount);
+app.get("/api/v1/auth/activate-account/:userId",authenticateToken, activateAccount);
+app.get("/api/v1/auth/delete-account/:userId",authenticateToken, deleteUser);
 
 
 

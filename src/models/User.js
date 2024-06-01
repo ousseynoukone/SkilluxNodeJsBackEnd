@@ -27,6 +27,10 @@ User.init({
         type : DataTypes.BOOLEAN,
         defaultValue:false
     },
+    isActive : {
+        type : DataTypes.BOOLEAN,
+        defaultValue:true
+    },
     email : {
         type : DataTypes.STRING,
         allowNull : false,

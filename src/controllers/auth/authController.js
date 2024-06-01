@@ -99,6 +99,9 @@ exports.login = async (req, res)=>{
     if(!user){
       return res.status(404).json({ error: 'Do not exist in our records'});
     }
+    if(!user.isActive){
+      return res.status(403).json({ error: 'Account deactivated'});
+    }
     const passwordMatch = await bcrypt.compare(loginDto.password, user.password);
     
     if (!passwordMatch) {
@@ -357,3 +360,75 @@ exports.changePassword = async(req,res)=>{
 }
   
 }
+
+
+
+// Deactivate Account
+exports.deactivateAccount = async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    // Find the user by ID
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Deactivate the user account
+    user.isActive = false;
+    await user.save();
+
+    return res.status(200).json({ success: 'Account deactivated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.toString() });
+  }
+};
+
+
+// Deactivate Account
+exports.activateAccount = async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    // Find the user by ID
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Deactivate the user account
+    user.isActive = true;
+    await user.save();
+
+    return res.status(200).json({ success: 'Account activated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.toString() });
+  }
+};
+
+
+// Delete User Account
+exports.deleteUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Find the user by ID
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete the user account
+    await user.destroy();
+
+    return res.status(200).json({ success: 'Account deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.toString() });
+  }
+};
