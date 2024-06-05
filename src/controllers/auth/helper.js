@@ -1,4 +1,4 @@
-const minimumAge = require("../../parameters/constants");
+const {minimumAge} = require("../../parameters/constants");
 
 function isOldEnough(dateString) {
     const [day, month, year] = dateString.split('-').map(Number);
