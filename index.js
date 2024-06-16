@@ -1,7 +1,7 @@
 const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
-const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout, deactivateAccount, deleteUser, activateAccount} = require("./src/controllers/auth/authController")
+const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout, deactivateAccount, deleteUser, activateAccount, sendVerifierEmail, accountActivationPageRenderer} = require("./src/controllers/auth/authController")
 const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost, getFollowedUserPost, searchPostByTags} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
@@ -61,7 +61,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////// ENDPOINTS /////////////////////////////////////////////////////////////////////////////
 
 // AUTH ENDPOINTS
@@ -78,6 +77,7 @@ app.post("/api/v1/auth/refresh-token",authenticateToken,refreshToken);
 app.get("/api/v1/auth/deactivate-account/:userId",authenticateToken, deactivateAccount);
 app.get("/api/v1/auth/activate-account/:userId",authenticateToken, activateAccount);
 app.get("/api/v1/auth/delete-account/:userId",authenticateToken, deleteUser);
+
 
 
 
@@ -159,25 +159,26 @@ app.get("/api/v1/basic/users/:id",authenticateToken,getUserInformations)
 // SEARCH BY USER 
 app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken ,searchUser);
 
-
-
+// Email verification system
+app.get("/api/v1/auth/verify-email/:email/:lang",sendVerifierEmail);
+app.get("/api/v1/auth/account-activation/:token",accountActivationPageRenderer);
 
 // ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////
 
 // BACKGROUND TASK TO CLEAN UP OLD READ NOTIFICATION
-// ┌───────────── minute (0 - 59)
-// │ ┌───────────── heure (0 - 23)
-// │ │ ┌───────────── jour du mois (1 - 31)
-// │ │ │ ┌───────────── mois (1 - 12 ou JAN-DÉC)
-// │ │ │ │ ┌───────────── jour de la semaine (0 - 6 ou DIM-SAM)
-// │ │ │ │ │
-// * * * * *  commande à exécuter
-
+            // ┌───────────── minute (0 - 59)
+            // │ ┌───────────── heure (0 - 23)
+            // │ │ ┌───────────── jour du mois (1 - 31)
+            // │ │ │ ┌───────────── mois (1 - 12 ou JAN-DÉC)
+            // │ │ │ │ ┌───────────── jour de la semaine (0 - 6 ou DIM-SAM)
+            // │ │ │ │ │
+            // * * * * *  
 cron.schedule('0 0 * * 0', async () => {
   logMessage()
   cleanupOldNotifications()
 });
 
+// BACKGROUND TASK TO CLEAN UP OLD EXPIRED TOKEN
 cron.schedule(' 0 0 * * * ', async () => {
   cleanupOldBlackListedToken()
   logMessage()

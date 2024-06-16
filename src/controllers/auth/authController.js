@@ -13,7 +13,7 @@ const { response } = require("express");
 require('dotenv').config(); // Load environment variables from .env file
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 const {ACCESS_TOKEN_EXPIRE,REFRESH_TOKEN_EXPIRE} = require("../../parameters/constants")
-const { renderHtmlResetPasswordForm } = require("../mailSender/html");
+const { renderHtmlResetPasswordForm,renderHtmlActivationAccount } = require("../mailSender/html");
 
 
 // FOR CACHING THE RESET PASSWORD TOKEN
@@ -22,6 +22,9 @@ const RegisterDto = require("../../models/dtos/registerDto");
 const BlacklistedToken = require("../../models/BlacklistedToken");
 const myCache = new NodeCache();
 
+// FOR SENT EMAIL INNER CONTENT
+
+const MailSenderContent = require("../mailSender/emailHelperContent")
 
 // Function to generate access token
 function generateAccessToken(user) {
@@ -29,6 +32,7 @@ function generateAccessToken(user) {
     id: user.id,
     username: user.username,
     email: user.email,
+    lang: user.lang,
     isAdmin: user.isAdmin,
     preferredTags: user.preferredTags
 };
@@ -41,6 +45,7 @@ function generateRefreshToken(user) {
     id: user.id,
     username: user.username,
     email: user.email,
+    lang: user.lang,
     isAdmin: user.isAdmin,
     preferredTags: user.preferredTags
 
@@ -244,12 +249,23 @@ exports.forgotPasswword = async (req, res)=>{
   if (!user) {
       return res.status(404).json({ error: 'Do not exist in our records' });
   }
-
+  var emailSubject = "";
+  var emailHtml = "";
+  
   // Generate a reset token
   const token = crypto.randomBytes(20).toString('hex');
+  const mailSenderContent = new MailSenderContent(token);
 
-  // Optionally store the token in the database or another secure place
-  const mailSender = new MailSender(token, user.email);
+  // Localization handling
+  if(user.lang=="en"){
+    emailSubject = mailSenderContent.getEmailResetPasswordSubjectEn();
+    emailHtml = mailSenderContent.getEmailResetPasswordHtmlEn();
+  }else{
+    emailSubject = mailSenderContent.getEmailResetPasswordSubjectFr();
+    emailHtml = mailSenderContent.getEmailResetPasswordHtmlFr();
+  }
+
+  const mailSender = new MailSender(email,emailSubject,emailHtml);
 
   //Caching token and email for 5 minutes
   myCache.set("token",token,300)
@@ -273,17 +289,28 @@ exports.forgotPasswword = async (req, res)=>{
 
 exports.resetPasswwordPageRenderer = async (req, res)=>{ 
   const { token } = req.params;
-  const cachedToken = myCache.get("token");
-  const cachedEmail = myCache.get("email");
-  // Check if the token exists and is still valid
-  if (cachedToken === token) {
-    // Render a form for the user to enter a new password
-    const htmlContent = renderHtmlResetPasswordForm(cachedEmail,token);
-    res.send(htmlContent); // Send the HTML content as the response
+  try {
+    const cachedToken = myCache.get("token");
+    const cachedEmail = myCache.get("email");
+
+
+
+    // Check if the token exists and is  valid
+    if (cachedToken === token) {
+      const user = await User.findOne({where:{email:cachedEmail}})
+      let lang = user.lang || 'en';
+
+      // Render a form for the user to enter a new password
+      const htmlContent = renderHtmlResetPasswordForm(cachedEmail,token,lang);
+      res.send(htmlContent); // Send the HTML content as the response
 
   } else {
    return res.status(401).send('Invalid or expired token');
   }
+} catch (error) {
+  console.log(error);
+  res.status(500).json({ error: error.toString()});
+}
 
 }
 
@@ -431,3 +458,83 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ error: error.toString() });
   }
 };
+
+
+// Send Email For Verification
+
+exports.sendVerifierEmail = async (req, res) => {
+  const email = req.params.email || null;
+  const lang = req.params.lang || "en";
+
+  if (!email) {
+      return res.status(403).json({ error: 'Email is not specified' });
+  }
+
+  // Generate a token
+  const token = crypto.randomBytes(20).toString('hex');
+
+  // Localization handling
+  let emailSubject, emailHtml;
+  const mailSenderContent = new MailSenderContent(token);
+
+  if (lang === "en") {
+      emailSubject = mailSenderContent.getEmailVerificationSubjectEn();
+      emailHtml = mailSenderContent.getEmailVerificationHtmlEn();
+  } else {
+      emailSubject = mailSenderContent.getEmailVerificationSubjectFr();
+      emailHtml = mailSenderContent.getEmailVerificationHtmlFr();
+  }
+
+
+
+  try {
+
+      await User.update({ lang: lang }, { where: { email: email } });
+
+      // Caching token and email for 10 minutes
+      myCache.set("EmailVerificationToken", token, 600);
+      myCache.set("EmailVerificationemail", email, 600);
+      const mailSender = new MailSender(email, emailSubject, emailHtml);
+      await mailSender.sendMail();
+
+      res.status(200).send('Check your email for instructions on verifying your email address');
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.toString() });
+  }
+};
+
+
+
+
+exports.accountActivationPageRenderer = async (req, res)=>{ 
+  const { token } = req.params;
+
+try {
+
+
+  const cachedToken = myCache.get("EmailVerificationToken");
+  const cachedEmail = myCache.get("EmailVerificationemail");
+
+
+  // Check if the token exists and is still valid
+  if (cachedToken === token) {
+    const user = await User.findOne({where:{email:cachedEmail}})
+    let lang = user.lang || 'en';
+
+    // Activate account
+    await User.update({ isActive: true }, { where: { email: cachedEmail } });
+
+    // Render a form for the user to enter a new password
+    const htmlContent = renderHtmlActivationAccount(cachedEmail,lang);
+    res.send(htmlContent); // Send the HTML content as the response
+
+  } else {
+   return res.status(401).send('Invalid or expired token !  / Token invalide ou expiré ! ');
+  }
+} catch (error) {
+  console.error(error);
+  res.status(500).json({ error: error.toString() });
+}
+}
+

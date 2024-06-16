@@ -5,9 +5,10 @@ const EMAIL = process.env.EMAIL;
 const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
 
 class MailSender {
-    constructor(token, targetEmail) {
-        this.token = token;
+    constructor(targetEmail,email_subject,email_html) {
         this.targetEmail = targetEmail;
+        this.email_subject = email_subject;
+        this.email_html = email_html;
     }
 
     createTransporter() {
@@ -24,8 +25,10 @@ class MailSender {
         return {
             from: EMAIL,
             to: this.targetEmail,
-            subject: 'SKILLUX PASSWORD RESET',
-            text: `Click the following link to reset your password: http://localhost:5050/api/v1/auth/reset-password/${this.token} ,this link won't be available after 5mn.`,
+            subject: this.email_subject ,
+            html: this.email_html, //  to support HTML emails
+
+            
         };
     }
 

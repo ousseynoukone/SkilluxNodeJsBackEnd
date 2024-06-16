@@ -29,12 +29,16 @@ User.init({
     },
     isActive : {
         type : DataTypes.BOOLEAN,
-        defaultValue:true
+        defaultValue:false
     },
     email : {
         type : DataTypes.STRING,
         allowNull : false,
         unique : true
+    },
+    lang : {
+        type : DataTypes.STRING,
+        allowNull : true,
     },
     birth : {
         type : DataTypes.DATEONLY,
