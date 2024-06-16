@@ -103,7 +103,7 @@ exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
         height: 30px;
         animation: spin 2s linear infinite;
         margin: 0 auto;
-        margin-top:50px;
+        margin-top:20px;
       }
       @keyframes spin {
         0% { transform: rotate(0deg); }
