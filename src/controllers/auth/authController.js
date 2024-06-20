@@ -499,11 +499,8 @@ async function  sendVerifierEmail  (email,lang='en' ) {
       myCache.set("EmailVerificationemail", email, 600);
       const mailSender = new MailSender(email, emailSubject, emailHtml);
       await mailSender.sendMail();
-
-      res.status(200).send('Check your email for instructions on verifying your email address');
   } catch (error) {
       console.error(error);
-      res.status(500).json({ error: error.toString() });
   }
 };
 

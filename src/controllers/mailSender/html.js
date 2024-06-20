@@ -198,3 +198,4 @@ exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
   </body>
   </html>`;
 };
+
