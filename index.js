@@ -31,7 +31,7 @@ const { cleanupOldBlackListedToken } = require('./src/controllers/cronJobs/black
 
 const app = express();
 const PORT = process.env.PORT || 5050;
-
+const cors = require('cors');
 
 // Parse JSON request body
 app.use(express.json());
@@ -39,6 +39,8 @@ app.use(express.json());
 // Parse URL-encoded request body for html post form
 app.use(express.urlencoded({ extended: true }));
 
+// To use cors and allow all origins
+app.use(cors())
 
 app.listen(PORT, async () => {
   console.log("Server running on port "+PORT);
@@ -47,7 +49,7 @@ app.listen(PORT, async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     applyRelationShip()
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true });
     //{ force: true }
     // { alter: true }
   } catch (error) {
@@ -64,7 +66,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 /////////////////////////////////////////////////////////////////////////////////////// ENDPOINTS /////////////////////////////////////////////////////////////////////////////
 
 // AUTH ENDPOINTS
-app.post("/api/v1/auth/register", userRegisterValidator, register);
+app.post("/api/v1/auth/register/:lang", userRegisterValidator, register);
 app.post("/api/v1/auth/login", userLoginValidator, login);
 app.get("/api/v1/auth/logout",authenticateToken, logout);
 app.post("/api/v1/auth/forgot-password",forgotPasswword);
@@ -160,7 +162,6 @@ app.get("/api/v1/basic/users/:id",authenticateToken,getUserInformations)
 app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken ,searchUser);
 
 // Email verification system
-app.get("/api/v1/auth/verify-email/:email/:lang",sendVerifierEmail);
 app.get("/api/v1/auth/account-activation/:token",accountActivationPageRenderer);
 
 // ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////

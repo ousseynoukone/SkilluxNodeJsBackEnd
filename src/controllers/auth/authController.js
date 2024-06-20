@@ -164,7 +164,7 @@ exports.register = async (req, res) => {
         #swagger.description = 'Register endpoint'
     */
 
-    /* #swagger.responses[200] = {
+    /* #swagger.responses[201] = {
             description: "When registering is successful",
             content: {
                 "application/json": {
@@ -178,7 +178,7 @@ exports.register = async (req, res) => {
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ error: errors.array() });
   }
 
   try {
@@ -188,23 +188,27 @@ exports.register = async (req, res) => {
       // CHECK UNICITY OF USERNAME AND EMAIL
       let userUsernameCheck = await User.findOne({where:{username: req.body.username}})
       let userEmailCheck = await User.findOne({where:{email: req.body.email}})
-
+      let lang = req.params.lang;
       if(userUsernameCheck){
-        return res.status(400).json({ error: 'This username already exits in our records'});
+        return res.status(400).json({ error: lang=='en' ? 'This username already exits in our records.' : 'Ce nom d\'utilisateur n\'est pas disponible.'});
 
       }
 
       if(userEmailCheck){
-        return res.status(400).json({ error: 'This email already exits in our records'});
+        return res.status(400).json({ error: lang=='en' ? 'This email already exits in our records.' : 'Cet e-mail  n\'est pas disponible.'});
 
       }
 
       if(!isOldEnough(birth)){
-        return res.status(400).json({ error: 'Age does not met the minimum requirement.'});
+        return res.status(400).json({ error: lang=='en' ? 'Your age does not met the minimum requirement.' : 'Vous n\'avez pas l\'âge minimal requit.'});
+
       }
+      req.body.email=req.body.email.toLowerCase()
+      
       const registerDto = RegisterDto.fromBody(req.body)
 
       const user = await  User.create(registerDto);
+      await sendVerifierEmail(user.email,lang);
       return res.status(201).json({ success: 'Registration successful', user });
 
       } 
@@ -462,9 +466,8 @@ exports.deleteUser = async (req, res) => {
 
 // Send Email For Verification
 
-exports.sendVerifierEmail = async (req, res) => {
-  const email = req.params.email || null;
-  const lang = req.params.lang || "en";
+
+async function  sendVerifierEmail  (email,lang='en' ) {
 
   if (!email) {
       return res.status(403).json({ error: 'Email is not specified' });

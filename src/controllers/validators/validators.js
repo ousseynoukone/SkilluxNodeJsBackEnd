@@ -8,8 +8,8 @@ const userRegisterValidator = [
   body('password')
   .isLength({ min: 8 })
   .withMessage('Password must be at least 8 characters long')
-  .matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/, 'i')
-  .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  .matches(/^(?=.*\d)(?=.*[a-z])[a-zA-Z\d]{8,}$/, 'i')
+  .withMessage('Password must contain at least one  letter, one lowercase letter, and one number'),
   body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
   body('birth').isDate({format:"YYYY-MM-DD"}).withMessage('Birth day  must be a date'),
   body('birth').notEmpty().withMessage('Birth\'s day is required'),

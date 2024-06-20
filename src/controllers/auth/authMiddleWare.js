@@ -5,7 +5,7 @@ const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 
 const authenticateToken = async (req, res, next) => {
     // Extract the token from the Authorization header
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers['Authorization'];
     
     // Check if the header is present
     if (!authHeader) {

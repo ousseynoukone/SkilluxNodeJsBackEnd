@@ -1,7 +1,7 @@
 const {minimumAge} = require("../../parameters/constants");
 
 function isOldEnough(dateString) {
-    const [day, month, year] = dateString.split('-').map(Number);
+    const [year, month, day] = dateString.split('-').map(Number);
     const birthDate = new Date(year, month - 1, day);
     const today = new Date();
 

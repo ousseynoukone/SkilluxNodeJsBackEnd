@@ -8,7 +8,7 @@ const DATABASE_NAME = process.env.DATABASE_NAME;
 
 const sequelize = new Sequelize(`postgres://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}`, {
   dialect: 'postgres',
-  logging: false, // Enable logging; default: console.log
+  logging: true, // Enable logging; default: console.log
 });
 
 module.exports = { sequelize };
