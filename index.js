@@ -1,7 +1,7 @@
 const express = require('express');
 const { sequelize } = require("./src/db/db");
 const applyRelationShip = require("./src/db/applyRelationShip")
-const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout, deactivateAccount, deleteUser, activateAccount, sendVerifierEmail, accountActivationPageRenderer} = require("./src/controllers/auth/authController")
+const {login,register,forgotPasswword,resetPasswwordPageRenderer,resetPassword,changePassword, refreshToken, logout, deactivateAccount, deleteUser, activateAccount, resendVerifierEmail, accountActivationPageRenderer} = require("./src/controllers/auth/authController")
 const {deletePost,addPost,updatePost,getNoFollowedTagsPost,getFollowedTagsPost,getOnePost, getFollowedUserPost, searchPostByTags} = require("./src/controllers/post/postCrudeController")
 // const {deleteCategory,addCategory,updateCategory,getAllCategories,getOneCategory} = require("./src/controllers/category/categoryCrudController")
 const { getOneComment, addComment, updateComment, deleteComment , getAllChildrenComments,getAllTopLevelComments} = require('./src/controllers/comment/commentController');
@@ -49,7 +49,7 @@ app.listen(PORT, async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     applyRelationShip()
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true });
     //{ force: true }
     // { alter: true }
   } catch (error) {
@@ -163,6 +163,7 @@ app.get("/api/v1/basic/search-users/:username/:limit/:cursor",authenticateToken 
 
 // Email verification system
 app.get("/api/v1/auth/account-activation/:token",accountActivationPageRenderer);
+app.get("/api/v1/auth/verify-email/:email/:lang",resendVerifierEmail);
 
 // ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////
 

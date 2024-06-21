@@ -511,6 +511,22 @@ async function  sendVerifierEmail  (email,lang='en' ) {
 };
 
 
+exports.resendVerifierEmail = async (req, res)=>{ 
+  const  email  = req.params.email;
+  const  lang  = req.params.lang;
+  try {
+
+    await sendVerifierEmail(email,lang);
+    return res.status(200).send('Email sent ! ');
+
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({'error':error.toString()});
+
+  }
+}
 
 
 exports.accountActivationPageRenderer = async (req, res)=>{ 

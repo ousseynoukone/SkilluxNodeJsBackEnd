@@ -1,3 +1,5 @@
+
+const {getServerIP} = require('../auth/helper');
 class MailSenderContent {
     constructor(token) {
         this.token = token;
