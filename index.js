@@ -28,6 +28,7 @@ const cron = require('node-cron');
 const { logMessage } = require('./src/helper/helper');
 const { cleanupOldNotifications } = require('./src/controllers/cronJobs/notificationCronJob');
 const { cleanupOldBlackListedToken } = require('./src/controllers/cronJobs/blackListedTokenCronJob');
+const { cleanupOldDeactivatedAccount } = require('./src/controllers/cronJobs/deleteOldDeactivatedAccount');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -185,3 +186,18 @@ cron.schedule(' 0 0 * * * ', async () => {
   cleanupOldBlackListedToken()
   logMessage()
 });
+
+
+// BACKGROUND TASK TO CLEAN UP OLD Deactivated Account
+cron.schedule(' * * * * * ', async () => {
+  cleanupOldDeactivatedAccount()
+  logMessage()
+});
+
+
+
+
+
+
+
+
