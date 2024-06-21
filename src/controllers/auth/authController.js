@@ -187,13 +187,18 @@ exports.register = async (req, res) => {
     return res.status(400).json({ error: errors.array() });
   }
 
+
+
   try {
+    // TRANSACTION ALL PASS OR NOTHING !
+    const result = await sequelize.transaction(async t => {
+
       req.body.password = await bcrypt.hash(req.body.password, 10);
       let birth = req.body.birth
 
       // CHECK UNICITY OF USERNAME AND EMAIL
-      let userUsernameCheck = await User.findOne({where:{username: req.body.username}})
-      let userEmailCheck = await User.findOne({where:{email: req.body.email}})
+      let userUsernameCheck = await User.findOne({where:{username: req.body.username}}, { transaction: t })
+      let userEmailCheck = await User.findOne({where:{email: req.body.email}}, { transaction: t },)
       let lang = req.params.lang;
       if(userUsernameCheck){
         return res.status(400).json({ error: lang=='en' ? 'This username already exits in our records.' : 'Ce nom d\'utilisateur n\'est pas disponible.'});
@@ -213,9 +218,12 @@ exports.register = async (req, res) => {
       
       const registerDto = RegisterDto.fromBody(req.body)
 
-      const user = await  User.create(registerDto);
+      const user = await  User.create(registerDto, { transaction: t });
       await sendVerifierEmail(user.email,lang);
-      return res.status(201).json({ success: 'Registration successful', user });
+      return user;
+    });
+
+    return res.status(201).json({ success: 'Registration successful', result });
 
       } 
     catch (error) {
