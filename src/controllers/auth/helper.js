@@ -67,8 +67,8 @@ function getLoginErrorMessage(errorType, lang) {
       fr: 'Au moins un parmi le nom d\'utilisateur et l\'adresse e-mail doit être fourni',
     },
     userNotFound: {
-      en: 'User does not exist in our records',
-      fr: 'L\'utilisateur n\'existe pas dans nos enregistrements',
+      en: 'You do not exist in our records',
+      fr: 'Vous n\'existez pas dans nos enregistrements',
     },
     accountDeactivated: {
       en: 'Account deactivated',
