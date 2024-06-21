@@ -14,7 +14,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 const {ACCESS_TOKEN_EXPIRE,REFRESH_TOKEN_EXPIRE} = require("../../parameters/constants")
 const { renderHtmlResetPasswordForm,renderHtmlActivationAccount } = require("../mailSender/html");
-
+const {sequelize} = require("../../db/db");
 
 // FOR CACHING THE RESET PASSWORD TOKEN
 const NodeCache = require( "node-cache" ); 
@@ -191,7 +191,7 @@ exports.register = async (req, res) => {
 
   try {
     // TRANSACTION ALL PASS OR NOTHING !
-    const result = await sequelize.transaction(async t => {
+    const user = await sequelize.transaction(async t => {
 
       req.body.password = await bcrypt.hash(req.body.password, 10);
       let birth = req.body.birth
@@ -223,7 +223,7 @@ exports.register = async (req, res) => {
       return user;
     });
 
-    return res.status(201).json({ success: 'Registration successful', result });
+    return res.status(201).json({ success: 'Registration successful', user });
 
       } 
     catch (error) {
