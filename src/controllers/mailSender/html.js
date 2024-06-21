@@ -199,3 +199,66 @@ exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
   </html>`;
 };
 
+exports.renderHtmlActivationAccount = (email, lang = 'en') => {
+  const content = {
+    en: {
+      subject: "Account Activation",
+      title: "Account Activated",
+      message: "Your account has been activated. Please log in to the Skillux application.",
+    },
+    fr: {
+      subject: "Activation de compte",
+      title: "Compte Activé",
+      message: "Votre compte a été activé. Veuillez vous connecter à l'application Skillux.",
+    },
+  }[lang];
+
+  return `
+    <!DOCTYPE html>
+    <html lang="${lang}">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${content.subject}</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f9f9f9;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+        }
+        .container {
+          background-color: #ffffff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          max-width: 500px;
+          text-align: center;
+        }
+        .title {
+          font-size: 24px;
+          color: #333333;
+          margin-bottom: 10px;
+        }
+        .message {
+          font-size: 18px;
+          color: #666666;
+          margin-bottom: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="title">${content.title}</div>
+        <div class="message">${content.message}</div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+

@@ -89,15 +89,17 @@ exports.login = async (req, res)=>{
     const loginDto = LoginDto.fromBody(req.body);
 
     
-    if(!loginDto.username && !loginDto.email){
-      return res.status(401).json({ error: 'At least one among username and email should be provided'});
-    }
+
 
     let user;
     if (loginDto.username) {
         user = await User.findOne({ where: { username: loginDto.username } });
     } else if (loginDto.email) {
         user = await User.findOne({ where: { email: loginDto.email } });
+    }
+
+    if(!loginDto.username && !loginDto.email){
+      return res.status(401).json({ error: 'At least one among username and email should be provided'});
     }
 
     if(!user){
