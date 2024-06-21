@@ -49,7 +49,7 @@ app.listen(PORT, async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
     applyRelationShip()
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: true });
     //{ force: true }
     // { alter: true }
   } catch (error) {
