@@ -3,7 +3,7 @@ const User = require("../../models/User");
 const MailSender = require("../mailSender/mailSender");
 const LoginDto =  require("../../models/dtos/loginDto")
 const { validationResult } = require('express-validator');
-const {isOldEnough,convertToSeconds} = require("./helper")
+const {isOldEnough,convertToSeconds,getLoginErrorMessage} = require("./helper")
 const bcrypt = require('bcrypt');
 const getLoginResponseDto = require("../../models/dtos/userLoginResponseDto")
 const jwt = require('jsonwebtoken');
@@ -85,10 +85,14 @@ exports.login = async (req, res)=>{
     return res.status(400).json({ errors: errors.array() });
   }
 
+  const lang = req.params.lang || 'en'; // Default to 'en' if lang parameter is not provided
+
   try {
     const loginDto = LoginDto.fromBody(req.body);
 
-    
+    if (!loginDto.username && !loginDto.email) {
+      return res.status(401).json({ error: getLoginErrorMessage('usernameOrEmailRequired', lang) });
+    }
 
 
     let user;
@@ -98,20 +102,20 @@ exports.login = async (req, res)=>{
         user = await User.findOne({ where: { email: loginDto.email } });
     }
 
-    if(!loginDto.username && !loginDto.email){
-      return res.status(401).json({ error: 'At least one among username and email should be provided'});
+
+
+    if (!user) {
+      return res.status(404).json({ error: getLoginErrorMessage('userNotFound', lang) });
     }
 
-    if(!user){
-      return res.status(404).json({ error: 'Do not exist in our records'});
+    if (!user.isActive) {
+      return res.status(403).json({ error: getLoginErrorMessage('accountDeactivated', lang) });
     }
-    if(!user.isActive){
-      return res.status(403).json({ error: 'Account deactivated'});
-    }
+  
     const passwordMatch = await bcrypt.compare(loginDto.password, user.password);
     
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Login or/and Password incorrect' });
+      return res.status(401).json({ error: getLoginErrorMessage('loginPasswordIncorrect', lang) });
     }
 
     const token = generateAccessToken(user)
