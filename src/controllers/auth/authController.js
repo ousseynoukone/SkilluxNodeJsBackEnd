@@ -119,8 +119,9 @@ exports.login = async (req, res)=>{
     if (!user.isActive) {
       return res.status(403).json({ error: getLoginErrorMessage('accountDeactivated', lang) });
     }
-  
-
+    
+    user.lang=lang;
+    user.save();
     const token = generateAccessToken(user)
     const expire = convertToSeconds(ACCESS_TOKEN_EXPIRE);
     const loginResponse = getLoginResponseDto(user,token,expire)

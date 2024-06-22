@@ -53,7 +53,7 @@ app.listen(PORT, async () => {
     await sequelize.sync({ alter: true });
     //{ force: true }
     // { alter: true }
-  } catch (error) {
+  } catch (error) {   
     console.error('Unable to connect to the database:', error);
   }
 });
@@ -68,7 +68,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // AUTH ENDPOINTS
 app.post("/api/v1/auth/register/:lang", userRegisterValidator, register);
-app.post("/api/v1/auth/login", userLoginValidator, login);
+app.post("/api/v1/auth/login/:lang", userLoginValidator, login);
 app.get("/api/v1/auth/logout",authenticateToken, logout);
 app.post("/api/v1/auth/forgot-password",forgotPasswword);
 app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);

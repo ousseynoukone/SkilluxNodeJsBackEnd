@@ -1,10 +1,13 @@
 // Function to get user response
-function getLoginResponseDto(user,token,expire) {
+function getLoginResponseDto(user, token, expire) {
+    // Calculate the expiration date
+    const expireDate = new Date(Date.now() + expire * 1000);
+    
     return {
-        id: user.id,
         token: token,
-        expire: expire,
+        expire: expireDate.toISOString(), // Return as an ISO string
+        user:user
     };
 }
 
-module.exports =  getLoginResponseDto
+module.exports = getLoginResponseDto;
