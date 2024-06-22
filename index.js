@@ -189,7 +189,7 @@ cron.schedule(' 0 0 * * * ', async () => {
 
 
 // BACKGROUND TASK TO CLEAN UP OLD Deactivated Account
-cron.schedule(' * * * * * ', async () => {
+cron.schedule(' 0 0 * * * ', async () => {
   cleanupOldDeactivatedAccount()
   logMessage()
 });

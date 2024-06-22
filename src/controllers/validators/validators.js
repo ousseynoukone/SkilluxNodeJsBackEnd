@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 
 const userRegisterValidator = [
   body('email').notEmpty().withMessage('Email is required').isEmail().withMessage('Invalid email format'),
-  body('username').notEmpty().withMessage('Username is required').isLength({ min: 2, max: 50 }).withMessage('Username must be between 2 and 50 characters'),
+  body('username').notEmpty().withMessage('Username is required').isLength({ min: 2, max: 50 }).withMessage('Username must be between 2 and 50 characters').isLowercase().withMessage("Username should be all lowercase"),
   body('password')
   .isLength({ min: 8 })
   .withMessage('Password must be at least 8 characters long')

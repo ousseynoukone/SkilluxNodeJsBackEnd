@@ -5,16 +5,16 @@ const User = require("../../models/User");
 async function cleanupOldDeactivatedAccount() {
   const t = await sequelize.transaction();
   try {
-    // Calculate the date 10 minutes ago from now
-    const tenMinutesAgo = new Date();
-    tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+    // Calculate the date 3 days ago from now
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
 
-    // Delete users where isActive is false and createdAt is older than 10 minutes
+    // Delete users where isActive is false and createdAt is older than 3 days
     const deletedCount = await User.destroy({
       where: {
         isActive: false,
         createdAt: {
-          [Op.lt]: tenMinutesAgo
+          [Op.lt]: threeDaysAgo
         }
       },
       transaction: t

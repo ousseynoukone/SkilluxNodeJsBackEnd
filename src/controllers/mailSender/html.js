@@ -39,7 +39,7 @@ exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        padding-top: 5vh;
       }
       .form-container {
         background-color: #fff;
@@ -229,7 +229,7 @@ exports.renderHtmlActivationAccount = (email, lang = 'en') => {
           display: flex;
           justify-content: center;
           align-items: center;
-          height: 100vh;
+          padding-top: 5vh;
         }
         .container {
           background-color: #ffffff;

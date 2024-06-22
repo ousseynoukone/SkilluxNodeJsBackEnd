@@ -1,12 +1,9 @@
 // Function to get user response
-function getLoginResponseDto(user) {
+function getLoginResponseDto(user,token,expire) {
     return {
         id: user.id,
-        fullName: user.fullName,
-        username: user.username,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        profilePicture: user.profilePicture,
+        token: token,
+        expire: expire,
     };
 }
 
