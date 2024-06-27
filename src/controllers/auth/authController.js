@@ -3,15 +3,17 @@ const User = require("../../models/User");
 const MailSender = require("../mailSender/mailSender");
 const LoginDto =  require("../../models/dtos/loginDto")
 const { validationResult } = require('express-validator');
-const {isOldEnough,convertToSeconds,getLoginErrorMessage} = require("./helper")
+const {isOldEnough,convertToExpireDate,getLoginErrorMessage} = require("./helper")
 const bcrypt = require('bcrypt');
-const getLoginResponseDto = require("../../models/dtos/userLoginResponseDto")
+const {getLoginResponseDto,getRefreshTokenDto} = require("../../models/dtos/tokenResponseDto")
 const jwt = require('jsonwebtoken');
 const { where } = require("sequelize");
 const crypto = require('crypto');
 const { response } = require("express");
 require('dotenv').config(); // Load environment variables from .env file
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET; 
+const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET; 
+
 const {ACCESS_TOKEN_EXPIRE,REFRESH_TOKEN_EXPIRE} = require("../../parameters/constants")
 const { renderHtmlResetPasswordForm,renderHtmlActivationAccount } = require("../mailSender/html");
 const {sequelize} = require("../../db/db");
@@ -51,7 +53,7 @@ function generateRefreshToken(user) {
 
 };
 
-  return jwt.sign(payload, accessTokenSecret, { expiresIn: REFRESH_TOKEN_EXPIRE });
+  return jwt.sign(payload, refreshTokenSecret, { expiresIn: REFRESH_TOKEN_EXPIRE });
 }
 
 
@@ -122,9 +124,9 @@ exports.login = async (req, res)=>{
     
     user.lang=lang;
     user.save();
-    const token = generateAccessToken(user)
-    const expire = convertToSeconds(ACCESS_TOKEN_EXPIRE);
-    const loginResponse = getLoginResponseDto(user,token,expire)
+    const acessToken = generateAccessToken(user)
+    const refreshToken = generateRefreshToken(user)
+    const loginResponse = getLoginResponseDto(user,acessToken,refreshToken)
 
     return res.status(200).json({ success: 'Login successful', ...loginResponse} );
 
@@ -255,8 +257,11 @@ exports.refreshToken = async (req, res)=>{
   if(!user){
     return  res.status(404).send('USER NOT FOUND');
   } 
-  const token = generateRefreshToken(user)
-  res.status(201).json({"sucess":'Token refreshed ! ',"token" : token,"expire":convertToSeconds(REFRESH_TOKEN_EXPIRE)});
+  const access_token = generateAccessToken(user)
+  const refresh_token = generateRefreshToken(user)
+  const refreshTokenDto = getRefreshTokenDto(access_token,refresh_token)
+
+  res.status(200).json({"sucess":'Token refreshed ! ',...refreshTokenDto});
 }catch (error) {
   console.log(error);
   res.status(500).json({ error: error.toString()});

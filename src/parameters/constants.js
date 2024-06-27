@@ -3,7 +3,7 @@ const minimumAge = 12
 const cleanUpNotificationDate = 7 * 24 * 60 * 60 * 1000;
 
 // Api Auth Token Expiration
-ACCESS_TOKEN_EXPIRE = "15m"
-REFRESH_TOKEN_EXPIRE = "7d"
+const ACCESS_TOKEN_EXPIRE = "1m";
+const REFRESH_TOKEN_EXPIRE = "1m"; 
 
 module.exports = {minimumAge,cleanUpNotificationDate,ACCESS_TOKEN_EXPIRE,REFRESH_TOKEN_EXPIRE}

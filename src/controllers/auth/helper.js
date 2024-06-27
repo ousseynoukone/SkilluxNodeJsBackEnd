@@ -17,7 +17,7 @@ function isOldEnough(dateString) {
     }
     return age >= minimumAge;
 }
-function convertToSeconds(timeStr) {
+function convertToExpireDate(timeStr) {
   // Regular expression to match the pattern of the string
   const regExp = /^(\d+)([smhd])$/;
   const match = timeStr.match(regExp);
@@ -27,23 +27,34 @@ function convertToSeconds(timeStr) {
     const value = parseInt(match[1]);
     const unit = match[2];
 
+    let seconds;
+
     switch (unit) {
       case 's':
-        return value; // already in seconds
+        seconds = value; // already in seconds
+        break;
       case 'm':
-        return value * 60; // convert minutes to seconds
+        seconds = value * 60; // convert minutes to seconds
+        break;
       case 'h':
-        return value * 3600; // convert hours to seconds
+        seconds = value * 3600; // convert hours to seconds
+        break;
       case 'd':
-        return value * 86400; // convert days to seconds
+        seconds = value * 86400; // convert days to seconds
+        break;
       default:
         throw new Error('Invalid time unit');
     }
+
+    // Calculate the expire date
+    const expireDate = new Date(Date.now() + seconds * 1000);
+
+    // Return the ISO string representation of the expire date
+    return expireDate.toISOString();
   } else {
     throw new Error('Invalid time format');
   }
 }
-
 
 function getServerIP() {
   const networkInterfaces = os.networkInterfaces();
@@ -83,7 +94,7 @@ function getLoginErrorMessage(errorType, lang) {
   return messages[errorType][lang] || messages[errorType]['en']; // Default to English if language is not defined
 }
 
-module.exports = {isOldEnough,convertToSeconds,getServerIP,getLoginErrorMessage};
+module.exports = {isOldEnough,convertToExpireDate,getServerIP,getLoginErrorMessage};
 
 
 

@@ -13,7 +13,9 @@ const { userRegisterValidator, userLoginValidator, postAddingValidator,
   commentUpdateValidator,moderationValidator,
   updateUserTagsPreferencesValidator
 } = require('./src/controllers/validators/validators');
-const authenticateToken  = require("./src/controllers/auth/authMiddleWare")
+const authenticateToken  = require("./src/controllers/auth/middleware/authMiddleWare")
+const refreshTokenMiddleWare  = require("./src/controllers/auth/middleware/refreshTokenMiddleWare")
+
 require('dotenv').config(); // Load environment variables from .env file
 
 // Swagger
@@ -74,7 +76,7 @@ app.post("/api/v1/auth/forgot-password",forgotPasswword);
 app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);
 app.post("/api/v1/auth/reset-password",resetPassword);
 app.post("/api/v1/auth/change-password",authenticateToken,changePassword);
-app.post("/api/v1/auth/refresh-token",authenticateToken,refreshToken);
+app.post("/api/v1/auth/refresh-token",refreshTokenMiddleWare,refreshToken);
 
 // For moderator and User
 app.get("/api/v1/auth/deactivate-account/:userId",authenticateToken, deactivateAccount);

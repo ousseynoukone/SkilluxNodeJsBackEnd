@@ -1,15 +1,15 @@
 require('dotenv').config(); // Load environment variables from .env file
 const jwt = require('jsonwebtoken');
-const BlacklistedToken = require('../../models/BlacklistedToken');
+const BlacklistedToken = require('../../../models/BlacklistedToken');
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 
 const authenticateToken = async (req, res, next) => {
     // Extract the token from the Authorization header
-    const authHeader = req.headers['Authorization'];
+    const authHeader = req.headers['authorization'];
     
     // Check if the header is present
     if (!authHeader) {
-        return res.sendStatus(401); // Unauthorized if no header is found
+        return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Extract the token from the header
@@ -17,7 +17,8 @@ const authenticateToken = async (req, res, next) => {
 
     // Check if the token is present
     if (!token) {
-        return res.sendStatus(401); // Unauthorized if no token is found
+        return res.status(401).json({ error: 'Unauthorized no token found' });
+
     }
 
     // Check if the token is blacklisted
