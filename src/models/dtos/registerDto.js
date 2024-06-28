@@ -9,6 +9,8 @@ class RegisterDto {
     /** @type {string} */
     password;
     /** @type {string} */
+    lang;
+    /** @type {string} */
     email;
      /** @type {Date} */
     birth;
@@ -19,6 +21,7 @@ class RegisterDto {
         registerDto.username = body.username;
         registerDto.fullName = body.fullName;
         registerDto.password = body.password;
+        registerDto.lang = body.lang;
         registerDto.email = body.email;
         registerDto.birth = body.birth;
 

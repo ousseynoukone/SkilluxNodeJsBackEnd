@@ -4,12 +4,23 @@ const { body } = require('express-validator');
 
 const userRegisterValidator = [
   body('email').notEmpty().withMessage('Email is required').isEmail().withMessage('Invalid email format').isLowercase().withMessage("Email should be all lowercase"),
-  body('username').notEmpty().withMessage('Username is required').isLength({ min: 2, max: 50 }).withMessage('Username must be between 2 and 50 characters').isLowercase().withMessage("Username should be all lowercase"),
+  body('username')
+    .notEmpty().withMessage('Username is required')
+    .isLength({ min: 2, max: 50 }).withMessage('Username must be between 2 and 50 characters')
+    .isLowercase().withMessage('Username should be all lowercase')
+    .custom(value => {
+      if (/\s/.test(value)) {
+        throw new Error('Username should not contain spaces');
+      }
+      return true;
+    }),
+    
   body('password')
   .isLength({ min: 8 })
   .withMessage('Password must be at least 8 characters long')
-  .matches(/^(?=.*\d)(?=.*[a-z])[a-zA-Z\d]{8,}$/, 'i')
+  .matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()-_+=]{8,}$/, 'i')
   .withMessage('Password must contain at least one  letter, one lowercase letter, and one number'),
+
   body('isAdmin').optional().isBoolean().withMessage('isAdmin must be a boolean'),
   body('birth').isDate({format:"YYYY-MM-DD"}).withMessage('Birth day  must be a date'),
   body('birth').notEmpty().withMessage('Birth\'s day is required'),

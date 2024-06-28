@@ -75,13 +75,13 @@ app.get("/api/v1/auth/logout",authenticateToken, logout);
 app.post("/api/v1/auth/forgot-password",forgotPasswword);
 app.get("/api/v1/auth/reset-password/:token",resetPasswwordPageRenderer);
 app.post("/api/v1/auth/reset-password",resetPassword);
-app.post("/api/v1/auth/change-password",authenticateToken,changePassword);
+app.post("/api/v1/auth/change-password",authenticateToken,userLoginValidator,changePassword);
 app.post("/api/v1/auth/refresh-token",refreshTokenMiddleWare,refreshToken);
 
 // For moderator and User
 app.get("/api/v1/auth/deactivate-account/:userId",authenticateToken, deactivateAccount);
 app.get("/api/v1/auth/activate-account/:userId",authenticateToken, activateAccount);
-app.get("/api/v1/auth/delete-account/:userId",authenticateToken, deleteUser);
+app.post("/api/v1/auth/delete-account",authenticateToken, deleteUser);
 
 
 

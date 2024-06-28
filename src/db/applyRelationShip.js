@@ -23,7 +23,10 @@ function applyRelationShip() {
 
 
     // One to Many Section / Post (User HAS MANY Post)
-    User.hasMany(Post);
+    User.hasMany(Post,{
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
+    });
     Post.belongsTo(User);
 
     // One post has many comments and one comments belongs to one post

@@ -221,6 +221,13 @@ exports.register = async (req, res) => {
             }
 
             req.body.email = req.body.email.toLowerCase();
+            if(lang=='fr'){
+              req.body.lang="fr";
+            }else{
+              req.body.lang="en";
+
+            }
+            
             const registerDto = RegisterDto.fromBody(req.body);
 
             const user = await User.create(registerDto, { transaction: t });
@@ -391,38 +398,54 @@ exports.resetPassword = async (req, res)=>{
 
 
 
-exports.changePassword = async(req,res)=>{
-        /* #swagger.security = [{
-            "bearerAuth": []
-        }] 
-        */
+exports.changePassword = async (req, res) => {
+  /* #swagger.security = [{
+      "bearerAuth": []
+  }] 
+  */
 
   try {
-    const user = await User.findOne({where:{email:req.user.email}})
-  if(!user){
-    return  res.status(404).send('USER NOT FOUND');
-  } 
-    
+    const user = await User.findOne({ where: { email: req.user.email } });
+    if (!user) {
+      const message = user.lang === 'fr' ? 'UTILISATEUR NON TROUVÉ' : 'USER NOT FOUND';
+      return res.status(404).send(message);
+    }
 
-  const oldPassword = req.body.oldPassword
-    const newPassword = req.body.newPassword
+    const oldPassword = req.body.oldPassword;
+    const newPassword = req.body.newPassword;
 
-  const passwordMatch = await bcrypt.compare(oldPassword, user.password);
-    
-  if (!passwordMatch) {
-    return res.status(401).json({ error: 'Old password incorrect' });
-  }
+    // Check if old password matches the current password
+    const passwordMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!passwordMatch) {
+      const message = user.lang === 'fr' ? 'Ancien mot de passe incorrect' : 'Old password incorrect';
+      return res.status(401).json({ error: message });
+    }
 
-  user.password = await bcrypt.hash(newPassword,10)
-  user.save()
+    // Check if old password and new password are the same
+    if (oldPassword === newPassword) {
+      const message = user.lang === 'fr' ? 'L\'ancien et le nouveau mot de passe ne doivent pas être identiques' : 'Old and new passwords must not be the same';
+      return res.status(400).json({ error: message });
+    }
 
-  return  res.status(201).send('Password Updated ! ');
+    // Check if new password is the same as the current password
+    const newPasswordMatch = await bcrypt.compare(newPassword, user.password);
+    if (newPasswordMatch) {
+      const message = user.lang === 'fr' ? 'Le nouveau mot de passe ne doit pas être identique à l\'ancien' : 'New password must not be the same as the old password';
+      return res.status(400).json({ error: message });
+    }
+
+    // Update the password
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    const message = user.lang === 'fr' ? 'Mot de passe mis à jour!' : 'Password Updated!';
+    return res.status(201).json({"success":message});
   } catch (error) {
-  console.log(error)
-  return res.status(500).json({ error: error.toString()});
-}
-  
-}
+    console.log(error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
+
 
 
 
@@ -476,23 +499,35 @@ exports.activateAccount = async (req, res) => {
 
 // Delete User Account
 exports.deleteUser = async (req, res) => {
-  const { userId } = req.params;
+  const userId  = req.user.id;
+  const {password}  = req.body;
+
 
   try {
     // Find the user by ID
     const user = await User.findByPk(userId);
-
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      const message = user.lang === 'fr' ? 'Utilisateur non trouvé' : 'User not found';
+      return res.status(404).json({ error: message });
+    }
+
+    // Verify the provided password
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      const message = user.lang === 'fr' ? 'Mot de passe incorrect' : 'Incorrect password';
+      return res.status(401).json({ error: message });
     }
 
     // Delete the user account
     await user.destroy();
 
-    return res.status(200).json({ success: 'Account deleted successfully' });
+    const message = user.lang === 'fr' ? 'Compte supprimé avec succès' : 'Account deleted successfully';
+    return res.status(201).json({ success: message });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.toString() });
+    const message =  'An error occurred';
+    res.status(500).json({ error: message });
   }
 };
 
@@ -501,6 +536,7 @@ exports.deleteUser = async (req, res) => {
 
 
 async function  sendVerifierEmail  (email,lang='en' ) {
+ 
 
   if (!email) {
       return res.status(403).json({ error: 'Email is not specified' });
