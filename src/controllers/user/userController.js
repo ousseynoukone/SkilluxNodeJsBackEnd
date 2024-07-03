@@ -1,12 +1,16 @@
-const Notification = require("../../models/Notification");
-const User = require("../../models/User");
+const db = require("../../../db/models/index");
+
+
+const {Notification} = db;
+const {User} = db;
+const {Tag} = db;
 const { Op } = require('sequelize');
 
 
 // UPDATE USER TAGS PREFERENCES
 exports.updateUserTagsPreferences = async (req, res) => {
-    const userId = req.body.userId;
-    const userPreferredTags = req.body.tags;
+  const userId = req.user.id;
+  const tagIds = req.body.tags;
 
     if (!userId) {
       return res.status(404).json({ error: 'NO  USER ID FOUND!' });
@@ -14,11 +18,25 @@ exports.updateUserTagsPreferences = async (req, res) => {
 
     try {
       var user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found!' });
+      }
+
+    // Find tags by tagIds
+    const tags = await Tag.findAll({
+      where: {
+        id: tagIds
+      }
+    });
   
-      user.preferredTags = userPreferredTags;
-      await user.save();
+    if (!tags || tags.length === 0) {
+      return res.status(404).json({ error: 'Tags not found!' });
+    }
+
+    // Associate tags with the user
+    await user.setTags(tagIds);
   
-      res.status(200).json({ success: 'User tag preferences updated successfully' });
+    res.status(200).json({ success: 'User tag preferences updated successfully' });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: error.toString() });
@@ -27,27 +45,38 @@ exports.updateUserTagsPreferences = async (req, res) => {
   };
 
 
-  // GET USER INFORMATION
   exports.getUserInformations = async (req, res) => {
-    const userId = req.params.id;
-
+    const userId = req.user.id;
+  
     if (!userId) {
-      return res.status(404).json({ error: 'NO FOLLOWING USER ID FOUND!' });
+      return res.status(404).json({ error: 'No user found!' });
     }
   
     try {
-      // Find user by primary key
-      const user = await User.findByPk(userId);
+      // Find user by primary key, including associated tags
+      const user = await User.findByPk(userId, {
+        include: [
+          {
+            model: Tag,
+            attributes: ['id', 'libelle', 'score'] // Specify the attributes you want to include from the Tag model
+          }
+        ],
+        attributes: { exclude: ['password'] } // Exclude the password field from the user attributes
+      });
   
       // If user exists
       if (user) {
-        // Create a new object without the password key
-        const userWithoutPassword = Object.fromEntries(
-          Object.entries(user.toJSON()).filter(([key]) => key !== 'password')
-        );
+        // Modify the user object to remove user_tag from each tag
+        const userWithoutTagsUserTag = {
+          ...user.toJSON(),
+          Tags: user.Tags.map(tag => ({
+            id: tag.id,
+            libelle: tag.libelle,
+            score: tag.score
+          }))
+        };
   
-        // Send the modified user object as response
-        return res.status(200).json(userWithoutPassword);
+        return res.status(200).json(userWithoutTagsUserTag);
       } else {
         // If user does not exist, send appropriate response
         return res.status(404).json({ error: 'User not found' });
@@ -57,7 +86,7 @@ exports.updateUserTagsPreferences = async (req, res) => {
       console.error(error);
       return res.status(500).json({ error: error.toString() });
     }
-  }
+  };
   
 
 // Follow user

@@ -1,9 +1,10 @@
-const { validationResult } = require('express-validator');
-const Comment =  require("../../models/Comment")
+const db = require("../../../db/models/index");
+const {Comment} =  db;
+const {Notification} = db;
+const {User} = db;
 const { Sequelize, QueryTypes } = require('sequelize');
-const {sequelize} = require("../../db/db")
+const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
-const Notification = require('../../models/Notification');
 
 // Get all comments NOT USED FOR NOW
 // exports.getAllComments = async (req, res) => {
@@ -36,11 +37,11 @@ exports.getAllTopLevelComments = async (req, res) => {
                       c."isModified",
                       c."createdAt",
                       c."like",
-                      c."parentID",
+                      c."parentId",
                       0 AS "level",
                       ARRAY[c."id"] AS "path"
                     FROM comments c
-                    WHERE c."postId" = :postId AND c."parentID" IS NULL
+                    WHERE c."postId" = :postId AND c."parentId" IS NULL
 
                     UNION ALL
 
@@ -50,11 +51,11 @@ exports.getAllTopLevelComments = async (req, res) => {
                       c."isModified",
                       c."createdAt",
                       c."like",
-                      c."parentID",
+                      c."parentId",
                       cte."level" + 1 AS "level",
                       cte."path" || ARRAY[c."id"] AS "path"
                     FROM comments c
-                    JOIN cte ON c."parentID" = cte."id"
+                    JOIN cte ON c."parentId" = cte."id"
                   )
 
 
@@ -114,11 +115,11 @@ exports.getAllChildrenComments = async(req,res)=>{
           c."isModified",
           c."createdAt",
           c."like",
-          c."parentID",
+          c."parentId",
           0 AS "level",
           ARRAY[c."id"] AS "path"
         FROM comments c
-        WHERE  c."parentID" = :parentCommentId
+        WHERE  c."parentId" = :parentCommentId
 
         UNION ALL
 
@@ -128,11 +129,11 @@ exports.getAllChildrenComments = async(req,res)=>{
           c."isModified",
           c."createdAt",
           c."like",
-          c."parentID",
+          c."parentId",
           cte."level" + 1 AS "level",
           cte."path" || ARRAY[c."id"] AS "path"
         FROM comments c
-        JOIN cte ON c."parentID" = cte."id"
+        JOIN cte ON c."parentId" = cte."id"
       )
 
 
@@ -194,13 +195,18 @@ exports.addComment = async (req, res) => {
 
 
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
         // Connected User id
         const connectedUserId = req.user.id;
-        req.body.userId  = connectedUserId
+
+        // Find the user by their ID
+        const user = await User.findByPk(connectedUserId);
+
+        // If user does not exist, return 404 error
+        if (!user) {
+          return res.status(404).json({ error: "USER NOT FOUND" });
+        }
+
+        req.body.userId  = user.id
         const comment = await Comment.create(req.body);
 
         // Notification

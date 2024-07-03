@@ -1,5 +1,6 @@
-const Post = require("../../models/Post");
-const {sequelize} =  require("../../db/db")
+const db = require("../../../db/models/index");
+const {Post} = db;
+const sequelize = db.sequelize;
 
 
 

@@ -1,6 +1,8 @@
 const { Op } = require("sequelize");
-const { sequelize } = require("../../db/db");
-const BlacklistedToken = require("../../models/BlacklistedToken");
+const db = require("../../../db/models/index");
+const {BlacklistedToken} = db;
+
+const sequelize = db.sequelize;
 
 // Clean up expired blacklisted tokens
 async function cleanupOldBlackListedToken() {

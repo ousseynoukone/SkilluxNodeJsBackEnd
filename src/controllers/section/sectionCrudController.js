@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
-const Section = require('../../models/Section');
+const db = require("../../../db/models/index");
+const {Section} = db;
 
 exports.getAllSections = async (req, res) => {
     try {
@@ -24,10 +25,6 @@ exports.getOneSection = async (req, res) => {
 
 exports.addSection = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
 
         const section = await Section.create(req.body);
         return res.status(201).json({ success: "Section added!", section });
@@ -38,11 +35,6 @@ exports.addSection = async (req, res) => {
 
 exports.updateSection = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
 
         const section = await Section.findByPk(req.params.id);
         if (!section) {

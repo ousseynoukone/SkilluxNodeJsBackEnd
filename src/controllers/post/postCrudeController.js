@@ -1,11 +1,14 @@
-const Post = require("../../models/Post");
+const db = require("../../../db/models/index");
+const {Post} = db;
+const {User} = db;
+const {Comment} = db;
+const {Section} = db;
+
 const { validationResult } = require('express-validator');
-const Section = require("../../models/Section");
-const Comment = require("../../models/Comment");
 const { checkForTags } = require("./postController");
-const { Op } = require('sequelize');
-const User = require("../../models/User");
-const {sequelize} =  require("../../db/db")
+const { Op ,Sequelize} = require('sequelize');
+const tag = require("../../../db/models/tag");
+const sequelize = db.sequelize;
 
 
 
@@ -15,12 +18,29 @@ exports.getFollowedTagsPost = async (req, res) => {
     // Parse and validate limit
     const limit = parseInt(req.params.limit, 10) || 10;
 
+    // Extract user ID from the authenticated request
+    const userId = req.user.id;
+
+    // Find the user by their ID
+    const user = await User.findByPk(userId);
+
+    // If user does not exist, return 404 error
+    if (!user) {
+      return res.status(404).json({ error: "USER NOT FOUND" });
+    }
+
     // Parse and validate cursor
     const rawCursor = req.params.cursor;
     const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
     
-    // Extract user preferences
-    const userPreferences = req.user.preferredTags || [];
+    // Get tags associated with the user, fetching only 'libelle'
+    const userTags = await user.getTags({
+      attributes: [[Sequelize.fn('LOWER', Sequelize.col('libelle')), 'libelle']]
+    });
+    
+
+    // Extract libelle values into an array
+    const userPreferedTagsLibelle = userTags.map(tag=>tag.libelle)
 
     // Construct the query for finding posts
     const preferredPostsQuery = {
@@ -32,7 +52,7 @@ exports.getFollowedTagsPost = async (req, res) => {
       where: {
 
         [Op.and]: [
-            { tags: { [Op.overlap]: userPreferences } },
+            { tags: { [Op.overlap]: userPreferedTagsLibelle } },
             cursor ? { createdAt: { [Op.lt]: cursor } } : {},
           ],
   
@@ -46,8 +66,8 @@ exports.getFollowedTagsPost = async (req, res) => {
 
     // Transform results to include the number of comments
     const postWithNumberOfComment = preferredPosts.map(post => {
-      const commentCount = post.comments.length;
-      const { comments, ...postData } = post.toJSON();
+      const commentCount = post.Comments.length;
+      const { Comments, ...postData } = post.toJSON();
       return { ...postData, commentCount };
     });
 
@@ -68,6 +88,89 @@ exports.getFollowedTagsPost = async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 };
+
+
+// Get random no followed  tag's post
+exports.getNoFollowedTagsPost = async (req, res) => {
+  try {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
+        // Extract user ID from the authenticated request
+    const userId = req.user.id;
+
+    // Find the user by their ID
+    const user = await User.findByPk(userId);
+
+    // If user does not exist, return 404 error
+    if (!user) {
+      return res.status(404).json({ error: "USER NOT FOUND" });
+    }
+    // Get tags associated with the user, fetching only 'libelle'
+    const userTags = await user.getTags({
+      attributes: [[Sequelize.fn('LOWER', Sequelize.col('libelle')), 'libelle']]
+    });
+    
+
+    // Extract libelle values into an array
+    const userPreferedTagsLibelle = userTags.map(tag=>tag.libelle)
+
+    // Fetch preferred post IDs separately
+    const preferredPostIds = await Post.findAll({
+      where: {
+        tags: { [Op.overlap]: userPreferedTagsLibelle },
+      },
+      attributes: ['id'],
+    }).then(preferredPosts => preferredPosts.map(post => post.id));
+
+    // Construct the query for finding posts not matching user's preferred tags
+    const noFollowedTagsPostQuery = {
+      include: [
+        { model: Section },
+        { model: Comment, attributes: ['id'] },
+      ],
+      limit: limit,
+      where: {
+        [Op.and]: [
+          { id: { [Op.notIn]: preferredPostIds } }, // Exclude preferred posts by ID
+          cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+        ],
+      },
+      order: [['createdAt', 'DESC']],
+    };
+
+    // Execute the query
+    const noFollowedTagsPosts = await Post.findAll(noFollowedTagsPostQuery);
+
+    // Transform results to include the number of comments
+    const postsWithNumberOfComments = noFollowedTagsPosts.map(post => {
+      const commentCount = post.Comments.length;
+      const { Comments, ...postData } = post.toJSON();
+      return { ...postData, commentCount };
+    });
+
+    // Determine the next cursor
+    const nextCursor =
+      noFollowedTagsPosts.length > 0
+        ? noFollowedTagsPosts[noFollowedTagsPosts.length - 1].createdAt
+        : null;
+
+    // Send the response
+    return res.status(200).json({
+      posts: postsWithNumberOfComments,
+      nextCursor,
+    });
+  } catch (error) {
+    // Handle errors
+    console.error('Error fetching posts:', error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
+
 
 
 
@@ -119,8 +222,8 @@ exports.getFollowedUserPost = async (req, res) => {
 
     // Transform results to include the number of comments
     const postsWithNumberOfComments = followedUserPosts.map(post => {
-      const commentCount = post.comments.length;
-      const { comments, ...postData } = post.toJSON();
+      const commentCount = post.Comments.length;
+      const { Comments, ...postData } = post.toJSON();
       return { ...postData, commentCount };
     });
 
@@ -144,71 +247,6 @@ exports.getFollowedUserPost = async (req, res) => {
 
   
 
-
-
-exports.getNoFollowedTagsPost = async (req, res) => {
-  try {
-    // Parse and validate limit
-    const limit = parseInt(req.params.limit, 10) || 10;
-
-    // Parse and validate cursor
-    const rawCursor = req.params.cursor;
-    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
-
-    // Extract user preferences
-    const userPreferences = req.user.preferredTags || [];
-
-    // Fetch preferred post IDs separately
-    const preferredPostIds = await Post.findAll({
-      where: {
-        tags: { [Op.overlap]: userPreferences },
-      },
-      attributes: ['id'],
-    }).then(preferredPosts => preferredPosts.map(post => post.id));
-
-    // Construct the query for finding posts not matching user's preferred tags
-    const noFollowedTagsPostQuery = {
-      include: [
-        { model: Section },
-        { model: Comment, attributes: ['id'] },
-      ],
-      limit: limit,
-      where: {
-        [Op.and]: [
-          { id: { [Op.notIn]: preferredPostIds } }, // Exclude preferred posts by ID
-          cursor ? { createdAt: { [Op.lt]: cursor } } : {},
-        ],
-      },
-      order: [['createdAt', 'DESC']],
-    };
-
-    // Execute the query
-    const noFollowedTagsPosts = await Post.findAll(noFollowedTagsPostQuery);
-
-    // Transform results to include the number of comments
-    const postsWithNumberOfComments = noFollowedTagsPosts.map(post => {
-      const commentCount = post.comments.length;
-      const { comments, ...postData } = post.toJSON();
-      return { ...postData, commentCount };
-    });
-
-    // Determine the next cursor
-    const nextCursor =
-      noFollowedTagsPosts.length > 0
-        ? noFollowedTagsPosts[noFollowedTagsPosts.length - 1].createdAt
-        : null;
-
-    // Send the response
-    return res.status(200).json({
-      posts: postsWithNumberOfComments,
-      nextCursor,
-    });
-  } catch (error) {
-    // Handle errors
-    console.error('Error fetching posts:', error);
-    return res.status(500).json({ error: error.toString() });
-  }
-};
 
 
 
@@ -284,12 +322,18 @@ exports.getOnePost = async (req, res) => {
 exports.addPost = async (req, res) => {
 
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
+                // Extract user ID from the authenticated request
+        const userId = req.body.userId;
+
+        // Find the user by their ID
+        const user = await User.findByPk(userId);
+
+        // If user does not exist, return 404 error
+        if (!user) {
+          return res.status(404).json({ error: "USER NOT FOUND" });
         }
-        
-        
+        req.body.tags = req.body.tags.map(tag=> tag.toLowerCase());
+
         const post = await Post.create(req.body);
 
         return res.status(201).json({ success: "Post added!", post });
@@ -300,11 +344,6 @@ exports.addPost = async (req, res) => {
 
 exports.updatePost = async (req, res) => {
     try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
         var post = await Post.findByPk(req.params.id);
         if (!post) {
             return res.status(404).json({ error: "Post not found" });

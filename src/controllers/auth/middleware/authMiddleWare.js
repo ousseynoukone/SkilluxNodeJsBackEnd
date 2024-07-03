@@ -1,6 +1,8 @@
 require('dotenv').config(); // Load environment variables from .env file
 const jwt = require('jsonwebtoken');
-const BlacklistedToken = require('../../../models/BlacklistedToken');
+const db = require("../../../../db/models/index");
+
+const {BlacklistedToken} = db;
 const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 
 const authenticateToken = async (req, res, next) => {

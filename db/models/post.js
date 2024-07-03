@@ -1,0 +1,59 @@
+'use strict';
+const { Model } = require('sequelize');
+
+module.exports = (sequelize, DataTypes) => {
+  class Post extends Model {
+    static associate(models) {
+      // One-to-Many: Post HAS MANY Sections
+      Post.hasMany(models.Section, {
+        foreignKey: {
+          name:"sectionId",
+          allowNull: false, // Ensures a section cannot exist without a post
+        },
+        onDelete: 'CASCADE', // Deletes associated sections when a post is deleted
+        onUpdate: 'CASCADE',
+      });
+
+      // One-to-Many: Post HAS MANY Comments
+      Post.hasMany(models.Comment, {
+        foreignKey:'postId',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      });
+
+      // One-to-Many: Post HAS MANY Moderations
+      Post.hasMany(models.Moderation, {
+        foreignKey:'postId',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+      });
+
+      // Many-to-One: Post BELONGS TO User
+      Post.belongsTo(models.User, {
+        foreignKey: {
+          field: 'userId', // Specify the foreign key name in camelCase
+          onDelete: 'CASCADE',
+          onUpdate: 'CASCADE',
+        },
+      });
+    }
+  }
+
+  Post.init({
+    title: DataTypes.STRING,
+    readNumber: DataTypes.INTEGER,
+    votesNumber: DataTypes.INTEGER,
+    isPublished: DataTypes.BOOLEAN,
+    headerImage: DataTypes.STRING,
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING), // Define tags as an array of strings
+      allowNull: true,
+    }
+  }, {
+    sequelize,
+    modelName: 'Post',
+    tableName: 'posts' 
+  });
+
+  return Post;
+};

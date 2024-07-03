@@ -1,8 +1,10 @@
 const { Op } = require("sequelize");
-const Notification = require("../../models/Notification");
-const User = require("../../models/User");
-const Comment = require("../../models/Comment");
-const Post = require("../../models/Post");
+const db = require("../../../db/models/index");
+
+const {Notification} = db;
+const {User} = db;
+const {Comment} = db;
+const {Post} = db;
 
 // Get all notifications for the connected user
 exports.getUserNotifications = async (req, res) => {

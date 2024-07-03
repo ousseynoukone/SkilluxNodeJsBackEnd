@@ -1,5 +1,9 @@
 //AUTH CONTROLLER
-const User = require("../../models/User");
+const db = require("../../../db/models/index");
+const {BlacklistedToken} = db;
+const {User} = db;
+
+
 const MailSender = require("../mailSender/mailSender");
 const LoginDto =  require("../../models/dtos/loginDto")
 const { validationResult } = require('express-validator');
@@ -16,12 +20,11 @@ const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 
 const {ACCESS_TOKEN_EXPIRE,REFRESH_TOKEN_EXPIRE} = require("../../parameters/constants")
 const { renderHtmlResetPasswordForm,renderHtmlActivationAccount } = require("../mailSender/html");
-const {sequelize} = require("../../db/db");
+const sequelize = db.sequelize;
 
 // FOR CACHING THE RESET PASSWORD TOKEN
 const NodeCache = require( "node-cache" ); 
 const RegisterDto = require("../../models/dtos/registerDto");
-const BlacklistedToken = require("../../models/BlacklistedToken");
 const myCache = new NodeCache();
 
 // FOR SENT EMAIL INNER CONTENT
@@ -82,10 +85,6 @@ exports.login = async (req, res)=>{
             }
         }   
     */
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
 
   const lang = req.params.lang || 'en'; // Default to 'en' if lang parameter is not provided
 
@@ -191,12 +190,6 @@ exports.register = async (req, res) => {
       }   
     */
 
-    // Validate incoming request
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
-    }
-
     try {
         // Using transaction to ensure atomicity
         const user = await sequelize.transaction(async t => {
@@ -280,7 +273,7 @@ exports.refreshToken = async (req, res)=>{
 
 
 
-exports.forgotPasswword = async (req, res)=>{ 
+exports.forgotPassword = async (req, res)=>{ 
   const { email } = req.body;
   const user = await User.findOne({ where: { email: email } });
   lang = user.lang=="en";
@@ -330,8 +323,7 @@ exports.forgotPasswword = async (req, res)=>{
 
 
 
-
-exports.resetPasswwordPageRenderer = async (req, res)=>{ 
+exports.resetPasswordPageRenderer = async (req, res)=>{ 
   const { token } = req.params;
   try {
     const cachedToken = myCache.get("token");
