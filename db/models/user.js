@@ -8,18 +8,24 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Post, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+        foreignKey: 'userId', // Specify the foreign key name in camelCase
+
       });
 
       // One-to-Many: User HAS MANY Comments
       User.hasMany(models.Comment, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+        foreignKey: 'userId', // Specify the foreign key name in camelCase
+
       });
 
       // One-to-Many: User HAS MANY Moderations
       User.hasMany(models.Moderation, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
+        foreignKey: 'userId', // Specify the foreign key name in camelCase
+
       });
 
       // Many-to-Many: User BELONGS TO MANY Tags

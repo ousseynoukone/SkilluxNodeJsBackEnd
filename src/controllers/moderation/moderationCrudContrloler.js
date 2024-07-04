@@ -47,6 +47,8 @@ exports.addModeration = async (req, res) => {
             return res.status(400).json({ error: "User not found" });
         }
 
+        req.body.userId = user.id;
+
         post.isPublished = false;
         post.save()
         const moderation = await Moderation.create(req.body);

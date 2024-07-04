@@ -13,7 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       // Association with User model
       BlacklistedToken.belongsTo(models.User, {
-        foreignKey: 'userId', // Specify the foreign key name in camelCase
+        foreignKey: {
+          field:'userId',
+          name:'userId'
+        }, // Specify the foreign key name in camelCase
         onDelete: 'CASCADE', // Delete tokens associated with a user when the user is deleted
         onUpdate: 'CASCADE'
       });
@@ -21,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   BlacklistedToken.init({
     token: DataTypes.TEXT,
-    tokenExpirationSecondsLeft: DataTypes.INTEGER
+    tokenExpirationSecondsLeft: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'BlacklistedToken',

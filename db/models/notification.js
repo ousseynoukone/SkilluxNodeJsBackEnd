@@ -7,7 +7,11 @@ module.exports = (sequelize, DataTypes) => {
       // A notification belongs to a sender User
       Notification.belongsTo(models.User, {
         as: 'fromUser', // Alias for the association
-        foreignKey: 'fromUserId',
+        foreignKey: {
+          field:'fromUserId',
+          name:'fromUserId'
+
+        },
         onDelete: 'CASCADE', // Deletes notification if associated user is deleted
         onUpdate: 'CASCADE',
       });
@@ -15,7 +19,11 @@ module.exports = (sequelize, DataTypes) => {
       // A notification belongs to a recipient User
       Notification.belongsTo(models.User, {
         as: 'toUser', // Alias for the association
-        foreignKey: 'toUserId',
+        foreignKey: {
+          field:'toUserId',
+          name:'toUserId'
+
+        },
         onDelete: 'CASCADE', // Deletes notification if associated user is deleted
         onUpdate: 'CASCADE',
       });
@@ -27,7 +35,8 @@ module.exports = (sequelize, DataTypes) => {
   Notification.init({
     type: DataTypes.STRING,
     isRead: DataTypes.BOOLEAN,
-    ressourceId: DataTypes.INTEGER
+    ressourceId: DataTypes.INTEGER,
+
   }, {
     sequelize,
     modelName: 'Notification',

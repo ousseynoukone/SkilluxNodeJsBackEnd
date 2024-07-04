@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       Section.belongsTo(models.Post, {
         foreignKey: {
           field: 'postId', // Specify the foreign key name in camelCase
+          name:'postId',
           allowNull: false, // Ensures a section cannot exist without a post
         },
         onDelete: 'CASCADE', // Deletes associated sections when a post is deleted
@@ -20,7 +21,8 @@ module.exports = (sequelize, DataTypes) => {
     content: DataTypes.STRING,
     title: DataTypes.STRING,
     media: DataTypes.STRING,
-    mediaType: DataTypes.STRING
+    mediaType: DataTypes.STRING,
+
   }, {
     sequelize,
     modelName: 'Section',

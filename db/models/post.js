@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       // One-to-Many: Post HAS MANY Sections
       Post.hasMany(models.Section, {
         foreignKey: {
-          name:"sectionId",
+          name:"postId",
           allowNull: false, // Ensures a section cannot exist without a post
         },
         onDelete: 'CASCADE', // Deletes associated sections when a post is deleted
@@ -31,7 +31,11 @@ module.exports = (sequelize, DataTypes) => {
       // Many-to-One: Post BELONGS TO User
       Post.belongsTo(models.User, {
         foreignKey: {
-          field: 'userId', // Specify the foreign key name in camelCase
+          foreignKey: {
+            field:'userId',
+            name:'userId'
+
+          },
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE',
         },
@@ -48,7 +52,9 @@ module.exports = (sequelize, DataTypes) => {
     tags: {
       type: DataTypes.ARRAY(DataTypes.STRING), // Define tags as an array of strings
       allowNull: true,
-    }
+    },
+
+
   }, {
     sequelize,
     modelName: 'Post',
