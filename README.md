@@ -42,7 +42,7 @@ Skillux is a mobile application designed to connect learners and experts in vari
 ### Endpoints (Swagger-autogen)
 Swagger autogen used : You might have as well a glimpse of all endpoints and some additional informations , but since it's auto-genarated , you might not have all effective informations. Refer to mostly PostMan collection.
 
-# SWGGER IS RUNNING AT  {host}/api-docs:{server_port}
+#### SWGGER IS RUNNING AT  {host}/api-docs:{server_port}
 
 
 
@@ -54,18 +54,18 @@ Swagger autogen used : You might have as well a glimpse of all endpoints and som
     https://github.com/ousseynoukone/skilluxfrontendflutter.git
 
 2. Install dependencies
-    npm install
+        npm install
 
 3. Install Sequelize CLI 
-    npm install -g sequelize-cli
+        npm install -g sequelize-cli
 
 ### Database Setup
 
 1. Create the database
-    npx sequelize-cli db:create
+        npx sequelize-cli db:create
 
 2. Run migrations
-    npx sequelize-cli db:migrate
+        npx sequelize-cli db:migrate
 
 3. Run the server ( BEFORE SEEDING FOR APPLYING ASSOCIATIONS)
     # For production:
@@ -74,7 +74,7 @@ Swagger autogen used : You might have as well a glimpse of all endpoints and som
         npm run start:dev
 
 4. (Optional) Seed the database
-    npx sequelize-cli db:seed:all
+        npx sequelize-cli db:seed:all
 
 
 
