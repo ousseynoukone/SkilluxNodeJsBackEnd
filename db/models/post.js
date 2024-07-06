@@ -47,7 +47,10 @@ module.exports = (sequelize, DataTypes) => {
     title: DataTypes.STRING,
     readNumber: DataTypes.INTEGER,
     votesNumber: DataTypes.INTEGER,
-    isPublished: DataTypes.BOOLEAN,
+    isPublished:{
+      type:DataTypes.BOOLEAN,
+      defaultValue:true
+    },
     headerImage: DataTypes.STRING,
     tags: {
       type: DataTypes.ARRAY(DataTypes.STRING), // Define tags as an array of strings

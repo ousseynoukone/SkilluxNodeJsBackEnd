@@ -18,6 +18,12 @@ Skillux is a mobile application designed to connect learners and experts in vari
 - Search functionality for finding relevant content, experts, or learners
 - Followed users feed
 - Discovery feed
+- ### How the recommendation algorythm work ?
+- First when the user connect to the app for the first time , he will have to personalize his feed by choosing his prefered tags 
+- If the user like a post , associated tags are added into user's tags preference and in the tags table .
+- If the tag already exist in tags table , the score of the tag are increased and top 15 of thoses tags are presented to users (for personalizing purpose when they log in for the first time)
+- Users's feed will prioritize tags that have higher score. 
+
 
 
 ### 4. User Connections

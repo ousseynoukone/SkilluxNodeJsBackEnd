@@ -33,6 +33,20 @@ module.exports = {
         profilePicture: 'profile-pic-url',
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        fullName: 'Neil Tyson',
+        username: 'taki',
+        profession: 'Devlopper',
+        isAdmin: true,
+        isActive: true,
+        email: 'neil.tyson@example.com',
+        lang: 'en',
+        birth: new Date('1985-05-15'),
+        password: await bcrypt.hash('passer123', saltRounds), // hashed password
+        profilePicture: 'profile-pic-url',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ], {});
   },

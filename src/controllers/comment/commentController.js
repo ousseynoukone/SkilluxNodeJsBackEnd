@@ -5,6 +5,7 @@ const {User} = db;
 const { Sequelize, QueryTypes } = require('sequelize');
 const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
+const {saveNotification} = require("../heper");
 
 // Get all comments NOT USED FOR NOW
 // exports.getAllComments = async (req, res) => {
@@ -98,7 +99,82 @@ exports.getAllTopLevelComments = async (req, res) => {
 };
 
 
+exports.getAllParentsComments = async(req,res)=>{
+  const childCommentId = req.params.childCommentId;
+  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
+  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+  try {
+    const result = await sequelize.query(
+      `
+      WITH RECURSIVE cte AS (
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          0 AS "level",
+          ARRAY[c."id"] AS "path"
+        FROM comments c
+        WHERE  c."id" = :childCommentId
 
+        UNION ALL
+
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          cte."level" + 1 AS "level",
+          cte."path" || ARRAY[c."id"] AS "path"
+        FROM comments c
+        JOIN cte ON c."id" = cte."parentId"
+      )
+
+
+      SELECT
+        id,
+        text,
+        "isModified",
+        "createdAt",
+        "like",
+        (
+          SELECT COUNT(*)
+          FROM cte c1
+          WHERE c1."path" @> ARRAY[cte."id"]
+          AND c1."id" <> cte."id"
+        ) AS "ascendantCount"
+      FROM cte
+      WHERE "level" > 0 
+      ORDER BY level DESC
+      LIMIT :limit OFFSET :offset;
+
+      `,
+      {
+      replacements: {
+      childCommentId,
+      limit,
+      offset,
+      },
+      type: QueryTypes.SELECT,
+      }
+    );
+
+if (result.length === 0) {
+return res.status(404).json({ message: 'No comments found' });
+}
+
+return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(500).json({ error: error.toString() });
+
+  }
+
+}
 
 
 exports.getAllChildrenComments = async(req,res)=>{
@@ -197,9 +273,10 @@ exports.addComment = async (req, res) => {
     try {
         // Connected User id
         const connectedUserId = req.user.id;
-
+        // Use a transaction to ensure all database operations are atomic
+        const result = await sequelize.transaction(async (t) => { 
         // Find the user by their ID
-        const user = await User.findByPk(connectedUserId);
+        const user = await User.findByPk(connectedUserId,{transaction:t});
 
         // If user does not exist, return 404 error
         if (!user) {
@@ -207,23 +284,24 @@ exports.addComment = async (req, res) => {
         }
 
         req.body.userId  = user.id
-        const comment = await Comment.create(req.body);
+        const comment = await Comment.create(req.body,{transaction:t});
 
         // Notification
         const fromUser = connectedUserId
-        const post = await comment.getPost()
+        const post = await comment.getPost({transaction:t})
         const toUser = post.userId
-        const notification = Notification.create(
-          {
-            ressourceId:comment.id,
-            toUserId : toUser,
-            fromUserId : fromUser,
-            type : "comment"
-          }
-        )
+
+        var notificationResult = await saveNotification(comment.id,toUser,fromUser,"comment",t);
+        if (!notificationResult.success) {
+          throw new Error(notificationResult.error);
+        }
+
+        return comment
+
+      })
 
 
-        return res.status(201).json({ success: "Comment added!", comment });
+        return res.status(201).json({ success: "Comment added!", result });
     } catch (error) {
         return res.status(500).json({ error: error.toString() });
     }

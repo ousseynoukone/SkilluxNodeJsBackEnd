@@ -34,7 +34,10 @@ module.exports = (sequelize, DataTypes) => {
 
   Notification.init({
     type: DataTypes.STRING,
-    isRead: DataTypes.BOOLEAN,
+    isRead:{
+      type:DataTypes.BOOLEAN,
+      defaultValue:false
+    },
     ressourceId: DataTypes.INTEGER,
 
   }, {

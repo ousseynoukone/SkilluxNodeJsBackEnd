@@ -11,21 +11,24 @@ module.exports = {
     "password": DATABASE_PASSWORD,
     "database": DATABASE_NAME,
     "host": DATABASE_HOST,
-    "port":DATABASE_PORT,
-    "dialect": "postgres"
+    "port": DATABASE_PORT,
+    "dialect": "postgres",
+    "logging": false // Disable SQL query logging
   },
   "test": {
     "username": "root",
     "password": null,
     "database": "database_test",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false // Disable SQL query logging
   },
   "production": {
     "username": "root",
     "password": null,
     "database": "database_production",
     "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false // Disable SQL query logging
   }
 }

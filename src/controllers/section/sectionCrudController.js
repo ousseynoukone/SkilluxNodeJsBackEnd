@@ -4,7 +4,11 @@ const {Section} = db;
 
 exports.getAllSections = async (req, res) => {
     try {
-        const sections = await Section.findAll();
+        postId = req.params.postId
+        if(!postId){
+            return res.status(404).json({ error: "Post id not found"});
+        }
+        const sections = await Section.findAll({where:{postId:postId}});
         return res.status(200).json(sections);
     } catch (error) {
         return res.status(500).json({ error: error.toString() });

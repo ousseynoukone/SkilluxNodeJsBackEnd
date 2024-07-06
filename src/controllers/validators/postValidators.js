@@ -1,9 +1,6 @@
 const { body, validationResult } = require('express-validator');
 
 exports.postAddingValidator = [
-  body('userId')
-    .notEmpty().withMessage('User ID is required')
-    .isInt().withMessage('UserID must be an integer'),
 
   body('title')
     .notEmpty().withMessage('Title is required')
@@ -39,9 +36,6 @@ exports.postAddingValidator = [
 ];
 
 exports.postUpdateValidator = [
-  body('userId')
-    .optional()
-    .isInt().withMessage('User ID must be an integer'),
 
   body('title')
     .optional()

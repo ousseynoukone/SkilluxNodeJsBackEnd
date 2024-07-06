@@ -5,91 +5,91 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.bulkInsert('tags', [
       {
-        libelle: 'Science',
+        libelle: 'science',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Travel',
+        libelle: 'travel',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Technology',
+        libelle: 'technology',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Health',
+        libelle: 'health',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Food',
+        libelle: 'food',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Lifestyle',
+        libelle: 'lifestyle',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Education',
+        libelle: 'education',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Finance',
+        libelle: 'finance',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Sports',
+        libelle: 'sports',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Art',
+        libelle: 'art',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Music',
+        libelle: 'music',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Movies',
+        libelle: 'movies',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Fashion',
+        libelle: 'fashion',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Business',
+        libelle: 'business',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        libelle: 'Environment',
+        libelle: 'environment',
         score: 0,
         createdAt: new Date(),
         updatedAt: new Date()

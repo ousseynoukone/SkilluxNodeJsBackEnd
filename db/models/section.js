@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   Section.init({
-    content: DataTypes.STRING,
+    content: DataTypes.TEXT,
     title: DataTypes.STRING,
     media: DataTypes.STRING,
     mediaType: DataTypes.STRING,

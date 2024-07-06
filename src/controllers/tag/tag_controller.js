@@ -1,12 +1,12 @@
 const db = require("../../../db/models/index");
-const { validationResult } = require('express-validator');
+
 
 const {Tag} = db;
 
 // Create Tag
 exports.setTags = async (req, res) => {
     try {
-
+        req.body.libelle = req.body.libelle.toLowerCase();
         // If validation passes, proceed to create the tag
         const tag = await Tag.create(req.body);
         return res.status(200).json({ success: "Tag added successfully!", tag });
@@ -20,12 +20,18 @@ exports.setTags = async (req, res) => {
 // Read all Tags
 exports.getTags = async (req, res) => {
     try {
-        const tags = await Tag.findAll();
+        // Retrieve all tags, limited to 15, ordered by 'score' in descending order
+        const tags = await Tag.findAll({
+            limit: 15,
+            order: [['score', 'DESC']]
+        });
         return res.status(200).json(tags);
     } catch (error) {
+        // Return a 500 status code with the error message if an error occurs
         return res.status(500).json({ error: error.toString() });
     }
 };
+
 
 // Read Tag by ID
 exports.getTagById = async (req, res) => {

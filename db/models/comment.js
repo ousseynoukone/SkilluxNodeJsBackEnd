@@ -54,9 +54,15 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   Comment.init({
-    text: DataTypes.STRING,
-    isModified: DataTypes.BOOLEAN,
-    like: DataTypes.INTEGER,
+    text: DataTypes.TEXT,
+    isModified: {
+      type:DataTypes.BOOLEAN,
+      defaultValue:false
+    } ,
+    like:{
+      type : DataTypes.INTEGER,
+      defaultValue:0
+    } 
   }, {
     sequelize,
     modelName: 'Comment',

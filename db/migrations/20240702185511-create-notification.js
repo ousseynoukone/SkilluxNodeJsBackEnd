@@ -15,7 +15,8 @@ module.exports = {
       },
       isRead: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: false,
+        allowNull: false
       },
       ressourceId: {
         type: Sequelize.INTEGER,

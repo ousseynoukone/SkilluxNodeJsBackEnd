@@ -23,7 +23,7 @@ module.exports = {
       },
       isPublished: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: true
       },
       headerImage: {
         type: Sequelize.STRING,
