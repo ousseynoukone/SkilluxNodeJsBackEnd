@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
   }
 
   Notification.init({
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM('like', 'vote', 'comment', 'post', 'follow'),
     isRead:{
       type:DataTypes.BOOLEAN,
       defaultValue:false

@@ -6,6 +6,7 @@ const {User} = db;
 const {Tag} = db;
 const { Op } = require('sequelize');
 const { saveNotification } = require("../heper");
+const NotificationType = require("../../models/dtos/notificationEnum");
 
 
 // UPDATE USER TAGS PREFERENCES
@@ -127,7 +128,7 @@ exports.followUser = async (req, res) => {
     await connectedUser.addFollowing(userToFollow, { transaction: t });
 
     // Create notification
-    const notificationResult = await saveNotification(connectedUserId, userIdToFollow, connectedUserId, "follow", t);
+    const notificationResult = await saveNotification(connectedUserId, userIdToFollow, connectedUserId,NotificationType.FOLLOW, t);
     
     if (!notificationResult.success) {
       throw new Error(notificationResult.error);

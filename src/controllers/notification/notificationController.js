@@ -109,6 +109,11 @@ function groupNotifications(notifications, userLang) {
       case 'vote':
         typeKey = `${notif.type}_${notif.ressourceId}`;
         break;
+
+      case 'like':
+        typeKey = `${notif.type}_${notif.ressourceId}`;
+        break;
+
       case 'comment':
         typeKey = `${notif.type}_${notif.ressource.postId}`;
         break;
@@ -177,8 +182,13 @@ function formatNotificationMessage(group, userLang) {
 
   switch (group.type) {
     case 'vote':
+      message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.votes}` : ` ${translatedMessage.vote}`;
+      break;
+
+    case 'like':
       message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.likes}` : ` ${translatedMessage.like}`;
       break;
+
     case 'comment':
       message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.comments}` : ` ${translatedMessage.comment}`;
       break;

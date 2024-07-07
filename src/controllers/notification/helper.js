@@ -1,7 +1,9 @@
 var notificationMessage = {
     fr: {
-        likes: 'ont aimés votre publication',
-        like: 'a aimé votre publication',
+        votes: 'ont aimés votre publication',
+        vote: 'a aimé votre publication',
+        likes: 'ont aimés votre commentaire',
+        like: 'a aimé votre commentaire',
         comments: 'ont commentés votre publication',
         comment: 'a commenté votre publication',
         follows: 'ont suivis votre compte',
@@ -11,7 +13,8 @@ var notificationMessage = {
         others: 'autres'
     },
     en: {
-        like: 'liked your post',
+        like: 'liked your comment',
+        vote: 'liked your post',
         comment: 'commented on your post',
         follow: 'followed your account',
         post: 'made a new publication',

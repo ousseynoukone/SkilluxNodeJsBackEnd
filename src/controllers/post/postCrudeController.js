@@ -7,6 +7,7 @@ const {saveBulkNotification} = require('../heper');
 const { validationResult } = require('express-validator');
 const { checkForTags } = require("./postController");
 const { Op ,Sequelize} = require('sequelize');
+const NotificationType = require("../../models/dtos/notificationEnum");
 const sequelize = db.sequelize;
 
 
@@ -366,7 +367,7 @@ exports.addPost = async (req, res) => {
       
       // Send notifications to followers
       if (followerIds.length > 0) {
-        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id, "post", t);
+        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }

@@ -10,7 +10,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       type: {
-        type: Sequelize.ENUM('vote', 'comment', 'follow', 'post'),
+        type: Sequelize.ENUM('vote', 'comment', 'follow', 'post','like'),
         allowNull: false
       },
       isRead: {

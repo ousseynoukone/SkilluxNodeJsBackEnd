@@ -6,10 +6,11 @@ const { Sequelize, QueryTypes } = require('sequelize');
 const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
 const {saveNotification} = require("../heper");
+const NotificationType = require("../../models/dtos/notificationEnum");
 
 // Get all comments NOT USED FOR NOW
 // exports.getAllComments = async (req, res) => {
-//     const postId=req.params.postId
+//     const commentId=req.params.postId
 //     if(!postId){
 //         return res.status(400).json({ error: "Please provide the post id" });
 //     }
@@ -291,7 +292,7 @@ exports.addComment = async (req, res) => {
         const post = await comment.getPost({transaction:t})
         const toUser = post.userId
 
-        var notificationResult = await saveNotification(comment.id,toUser,fromUser,"comment",t);
+        var notificationResult = await saveNotification(comment.id,toUser,fromUser,NotificationType.COMMENT,t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
@@ -336,4 +337,49 @@ exports.deleteComment = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ error: error.toString() });
     }
+};
+
+
+exports.voteComment = async (req, res) => {
+  const commentId = req.params.id;
+  const userId = req.user.id;
+
+  // Check if commentId and userId are provided
+  if (!commentId || !userId) {
+      return res.status(400).json({ error: 'Invalid request parameters' });
+  }
+
+  try {
+      // Use a transaction to ensure all database operations are atomic
+      const result = await sequelize.transaction(async (t) => {
+          // Find the post and user based on the provided IDs
+          const [comment, user] = await Promise.all([
+              Comment.findByPk(commentId, { transaction: t }),
+              User.findByPk(userId, { transaction: t })
+          ]);
+
+          // If either comment or user is not found, throw an error
+          if (!comment || !user) {
+              throw new Error('Comment or User not found');
+          }
+
+          // Increment the votes number of the comment
+         var result = await comment.increment('like', { transaction: t});
+         var notificationResult = await saveNotification(comment.id,comment.userId,user.id,NotificationType.LIKE,t);
+
+         if (!notificationResult.success) {
+          throw new Error(notificationResult.error);
+        } 
+
+        return result
+      
+      });
+
+      // Respond with the updated votes number
+      return res.status(200).json({ likeNumber: result.like });
+  } catch (error) {
+      // Log the error and respond with a 500 status code
+      console.error(error);
+      return res.status(500).json({ error: 'An error occurred while processing your request' });
+  }
 };

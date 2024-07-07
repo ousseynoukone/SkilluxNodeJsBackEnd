@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { Post, User, Tag, sequelize } = require("../../../db/models");
 const { getStringThatAreInAAndNotInB, getStringThatAreInAAndInB } = require('./postHelper');
 const {saveNotification} = require('../heper');
+const NotificationType = require('../../models/dtos/notificationEnum');
 
 // This function handles voting on a post
 exports.votePost = async (req, res) => {
@@ -31,7 +32,7 @@ exports.votePost = async (req, res) => {
             await post.increment('votesNumber', { transaction: t });
 
             //Send notification to the target
-            var notificationResult = await saveNotification(post.id,post.userId,user.id,"vote",t);
+            var notificationResult = await saveNotification(post.id,post.userId,user.id,NotificationType.VOTE,t);
             if (!notificationResult.success) {
               throw new Error(notificationResult.error);
             }
