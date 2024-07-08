@@ -124,6 +124,13 @@ exports.followUser = async (req, res) => {
       return res.status(404).json({ error: "USER TO FOLLOW NOT FOUND" });
     }
 
+    const rawFollowers = await userToFollow.getFollowers({attributes:['id'], transaction: t });
+    const followers = rawFollowers.map(follower=>follower.id)
+    if(followers.includes(connectedUser.id)){
+      await t.rollback();
+      return res.status(500).json({ error: "USER ALREADY FOLLOWED" });
+    }
+
     // Add following relationship
     await connectedUser.addFollowing(userToFollow, { transaction: t });
 

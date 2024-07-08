@@ -364,7 +364,7 @@ exports.addPost = async (req, res) => {
         transaction: t 
       });
       const followerIds = followers.map(follower => follower.id);
-      
+
       // Send notifications to followers
       if (followerIds.length > 0) {
         const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);

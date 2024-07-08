@@ -29,8 +29,12 @@ exports.getUserNotifications = async (req, res) => {
         }
       ],
       order: [['createdAt', 'DESC']],
+      limit: limit + 1, // Add 1 to check if there are more
       transaction: t
     });
+
+    const hasMore = rawNotifications.length > limit;
+    rawNotifications = hasMore ? rawNotifications.slice(0, limit) : rawNotifications;
 
     // Fetch associated resources (posts or comments)
     const notificationsWithResources = await Promise.all(rawNotifications.map(async notification => {
@@ -58,22 +62,16 @@ exports.getUserNotifications = async (req, res) => {
     // Apply limit after grouping
     groupedNotifications = groupedNotifications.slice(0, limit + 1);
 
-    // Determine if there are more records to fetch
-    const hasMore = groupedNotifications.length > limit;
-    groupedNotifications = hasMore ? groupedNotifications.slice(0, -1) : groupedNotifications;
+
 
     // Get IDs of unread notifications
-    const unreadNotificationIds = groupedNotifications
-      .filter(notif => !notif.isRead)
-      .map(notification => notification.id);
-
-    // Mark notifications as read
-    if (unreadNotificationIds.length > 0) {
+    const notificationIds = rawNotifications.map(notif => notif.id);
+    if (notificationIds.length > 0) {
       await Notification.update(
         { isRead: true },
         {
           where: {
-            id: unreadNotificationIds
+            id: notificationIds
           },
           transaction: t
         }
@@ -81,9 +79,8 @@ exports.getUserNotifications = async (req, res) => {
     }
 
     // Determine the next cursor
-    const nextCursor = groupedNotifications.length > 0
-      ? groupedNotifications[groupedNotifications.length - 1].createdAt
-      : null;
+    const nextCursor = hasMore ? rawNotifications[rawNotifications.length - 1].createdAt : null;
+
 
     await t.commit();
 
@@ -95,11 +92,10 @@ exports.getUserNotifications = async (req, res) => {
   }
 };
 
-function groupNotifications(notifications, userLang) {
+function groupNotifications(notifications, userLang = 'en') {
   let grouped = {};
   for (let notif of notifications) {
     // Create a date key based on the date (rounded to the day)
- // Create an hour key based on the date and hour
     const date = new Date(notif.createdAt);
     const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}_${date.getDay().toString().padStart(2, '0')}`;
         
@@ -202,3 +198,5 @@ function formatNotificationMessage(group, userLang) {
 
   return message;
 }
+
+exports.groupNotifications = groupNotifications;

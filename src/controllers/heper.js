@@ -1,5 +1,6 @@
 
 const { Notification,sequelize} = require("../../db/models");
+const { sendNotificationToUser ,sendPostNotificationToUser} = require("./notification/notificationSEEController");
 
 async function saveNotification(ressourceId,toUserId,fromUserId,type,transaction) {
   try {
@@ -15,7 +16,7 @@ async function saveNotification(ressourceId,toUserId,fromUserId,type,transaction
             transaction:transaction
           }
         )
-
+        await sendNotificationToUser(toUserId)
         return { success: true, notification };
 
   } catch (error) {
@@ -39,7 +40,9 @@ async function saveBulkNotification(ressourceId, arrayOfToUserId, fromUserId, ty
         transaction: transaction 
       }
     );
-    
+  await sendPostNotificationToUser(arrayOfToUserId)
+
+
     return { success: true, notifications };
   } catch (error) {
     return { success: false, error: error.toString() };

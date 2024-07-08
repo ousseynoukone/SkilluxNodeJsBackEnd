@@ -3,9 +3,12 @@ const router = express.Router();
 
 const { getUserNotifications } = require('../controllers/notification/notificationController');
 const authenticateToken = require("../controllers/auth/middleware/authMiddleWare");
+const { sendNotification } = require('../controllers/notification/notificationSEEController');
 
-// NOTIFICATION ENDPOINTS
+// NOTIFICATION ENDPOINT
 router.get('/basic/notifications/:limit/:cursor', authenticateToken, getUserNotifications);
-// router.patch('/basic/notifications/:id/read', authenticateToken, markNotificationAsRead);
+
+// SSE endpoint for notifications
+router.get('/basic/sse-notifications/', authenticateToken, sendNotification);
 
 module.exports = router;
