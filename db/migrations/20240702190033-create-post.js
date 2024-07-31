@@ -1,5 +1,6 @@
 'use strict';
 
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('posts', {
@@ -11,6 +12,10 @@ module.exports = {
       },
       title: {
         type: Sequelize.STRING,
+        allowNull: false
+      },
+      content: {
+        type: Sequelize.TEXT,
         allowNull: false
       },
       readNumber: {

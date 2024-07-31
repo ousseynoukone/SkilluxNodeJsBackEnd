@@ -16,7 +16,7 @@ module.exports = {
         lang: 'en',
         birth: new Date('1990-01-01'),
         password: await bcrypt.hash('passer123', saltRounds), // hashed password
-        profilePicture: 'profile-pic-url',
+        profilePicture: '',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -30,7 +30,7 @@ module.exports = {
         lang: 'en',
         birth: new Date('1985-05-15'),
         password: await bcrypt.hash('passer123', saltRounds), // hashed password
-        profilePicture: 'profile-pic-url',
+        profilePicture: '',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -44,7 +44,7 @@ module.exports = {
         lang: 'en',
         birth: new Date('1985-05-15'),
         password: await bcrypt.hash('passer123', saltRounds), // hashed password
-        profilePicture: 'profile-pic-url',
+        profilePicture: '',
         createdAt: new Date(),
         updatedAt: new Date()
       }

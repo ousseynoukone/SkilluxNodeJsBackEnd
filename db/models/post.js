@@ -4,16 +4,6 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Post extends Model {
     static associate(models) {
-      // One-to-Many: Post HAS MANY Sections
-      Post.hasMany(models.Section, {
-        foreignKey: {
-          name:"postId",
-          allowNull: false, // Ensures a section cannot exist without a post
-        },
-        onDelete: 'CASCADE', // Deletes associated sections when a post is deleted
-        onUpdate: 'CASCADE',
-      });
-
       // One-to-Many: Post HAS MANY Comments
       Post.hasMany(models.Comment, {
         foreignKey:'postId',
@@ -45,6 +35,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Post.init({
     title: DataTypes.STRING,
+    content: DataTypes.TEXT,
     readNumber: DataTypes.INTEGER,
     votesNumber: DataTypes.INTEGER,
     isPublished:{

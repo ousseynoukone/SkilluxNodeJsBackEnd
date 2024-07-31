@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const MulterHelper =  require("../controllers/multerMediaSaver/multer")
 const { 
   deletePost, addPost, updatePost, getNotRecommandedTagsPost, getRecommandedTagsPost, getOnePost, getFollowedUserPost, searchPostByTags 
 } = require("../controllers/post/postCrudeController");
@@ -18,7 +18,10 @@ router.get("/basic/posts/:id", authenticateToken, getOnePost);
 
 router.post("/basic/posts/vote/:id", authenticateToken, votePost);
 
-router.post("/basic/posts", authenticateToken, postAddingValidator, addPost);
+router.post("/basic/posts",   MulterHelper.upload.fields([
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'medias' }  
+]),authenticateToken, postAddingValidator, addPost);
 router.put("/basic/posts/:id", authenticateToken, postUpdateValidator, updatePost);
 router.delete("/basic/posts/:id", authenticateToken, deletePost);
 
