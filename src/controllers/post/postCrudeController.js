@@ -2,7 +2,6 @@ const db = require("../../../db/models/index");
 const {Post} = db;
 const {User} = db;
 const {Comment} = db;
-const {Section} = db;
 const {saveBulkNotification} = require('../heper');
 const { validationResult } = require('express-validator');
 const { checkForTags } = require("./postController");
@@ -45,7 +44,6 @@ exports.getRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts
     const preferredPostsQuery = {
       include: [
-        { model: Section },
         { model: Comment, attributes: ['id'] }
       ],
       limit: limit + 1, // Fetch one extra record to determine if there's a next page
@@ -138,7 +136,6 @@ exports.getNotRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts not matching user's preferred tags
     const noFollowedTagsPostQuery = {
       include: [
-        { model: Section },
         { model: Comment, attributes: ['id'] },
       ],
       limit: limit+1,
@@ -217,7 +214,6 @@ exports.getFollowedUserPost = async (req, res) => {
     // Construct the query for finding posts
     const followedUserPostsQuery = {
       include: [
-        { model: Section },
         { model: Comment, attributes: ['id'] },
       ],
       limit: limit+1,
@@ -326,7 +322,7 @@ exports.searchPostByTags = async (req, res) => {
 
 exports.getOnePost = async (req, res) => {
     try {
-        const post = await Post.findByPk(req.params.id,{include:[Section]});
+        const post = await Post.findByPk(req.params.id);
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
@@ -345,35 +341,43 @@ exports.addPost = async (req, res) => {
       // Find the user by their ID
       const user = await User.findByPk(userId, { transaction: t });
 
+      const files = req.files;
+      const file = req.file;
+      console.log("Arrived here addposT");
+      console.log(file);
+      console.log(files);
+
+
+      // const processedDelta = await processDelta(delta, req.files);
+
+
+      // // If user does not exist, return 404 error
+      // if (!user) {
+      //   throw new Error('USER_NOT_FOUND');
+      // }
+
+      // // Convert tags to lowercase
+      // req.body.tags = req.body.tags.map(tag => tag.toLowerCase());
       
+      // // Create the post
+      // const post = await Post.create(req.body, { transaction: t });
 
-      // If user does not exist, return 404 error
-      if (!user) {
-        throw new Error('USER_NOT_FOUND');
-      }
+      // // Get the IDs of the user's followers
+      // const followers = await user.getFollowers({ 
+      //   attributes: ['id'],
+      //   transaction: t 
+      // });
+      // const followerIds = followers.map(follower => follower.id);
 
-      // Convert tags to lowercase
-      req.body.tags = req.body.tags.map(tag => tag.toLowerCase());
-      
-      // Create the post
-      const post = await Post.create(req.body, { transaction: t });
+      // // Send notifications to followers
+      // if (followerIds.length > 0) {
+      //   const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
+      //   if (!notificationResult.success) {
+      //     throw new Error(notificationResult.error);
+      //   }
+      // }
 
-      // Get the IDs of the user's followers
-      const followers = await user.getFollowers({ 
-        attributes: ['id'],
-        transaction: t 
-      });
-      const followerIds = followers.map(follower => follower.id);
-
-      // Send notifications to followers
-      if (followerIds.length > 0) {
-        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
-        if (!notificationResult.success) {
-          throw new Error(notificationResult.error);
-        }
-      }
-
-      return post;
+      return null;
     });
 
     return res.status(201).json({ success: "Post added!", post: result });

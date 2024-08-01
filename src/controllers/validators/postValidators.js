@@ -6,21 +6,8 @@ exports.postAddingValidator = [
     .notEmpty().withMessage('Title is required')
     .isLength({ min: 1, max: 255 }).withMessage('Title must be between 1 and 255 characters'),
 
-  body('readNumber')
-    .optional()
-    .isInt({ min: 0 }).withMessage('View Number must be a non-negative integer'),
-
-  body('votesNumber')
-    .optional()
-    .isInt({ min: 0 }).withMessage('Votes Number must be a non-negative integer'),
-
-  body('isPublished')
-    .optional()
-    .isBoolean().withMessage('isPublished must be a boolean'),
-
-  body('headerImage')
-    .notEmpty().withMessage('Header Image is required')
-    .isString().withMessage('Header Image must be a string'),
+    body('content')
+    .notEmpty().withMessage('Content is required'),
 
   body('tags')
     .notEmpty().withMessage('Tags array is required')
