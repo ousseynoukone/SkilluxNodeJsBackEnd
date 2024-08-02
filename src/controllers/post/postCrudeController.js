@@ -8,8 +8,7 @@ const { checkForTags } = require("./postController");
 const { Op ,Sequelize} = require('sequelize');
 const NotificationType = require("../../models/dtos/notificationEnum");
 const sequelize = db.sequelize;
-
-
+const {insertMediasIntoDocument,getMediaLink} =  require("./postHelper")
 
 // FUNCTION TO GET FOLLOWED TAGS' POSTS WITH CURSOR PAGINATION
 exports.getRecommandedTagsPost = async (req, res) => {
@@ -341,48 +340,31 @@ exports.addPost = async (req, res) => {
       // Find the user by their ID
       const user = await User.findByPk(userId, { transaction: t });
 
-      const files = req.files;
-      const file = req.file;
-      console.log("Arrived here addposT");
-      console.log(file);
-      console.log(files);
+          // Access cover image
+      const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
 
+      // Access content files (medias)
+      const mediaFiles = req.files['medias'] || [];
 
-      // const processedDelta = await processDelta(delta, req.files);
+      var post=req.body;
+      post.userId = userId;
 
+      var paths = []
 
-      // // If user does not exist, return 404 error
-      // if (!user) {
-      //   throw new Error('USER_NOT_FOUND');
-      // }
+      mediaFiles.forEach(async file => {
 
-      // // Convert tags to lowercase
-      // req.body.tags = req.body.tags.map(tag => tag.toLowerCase());
-      
-      // // Create the post
-      // const post = await Post.create(req.body, { transaction: t });
+        let path = getMediaLink(file)
+        paths.push(path)   
+      });
+      post.headerImage = getMediaLink(coverImage)
+      post.content = await insertMediasIntoDocument(post.content,paths);
 
-      // // Get the IDs of the user's followers
-      // const followers = await user.getFollowers({ 
-      //   attributes: ['id'],
-      //   transaction: t 
-      // });
-      // const followerIds = followers.map(follower => follower.id);
-
-      // // Send notifications to followers
-      // if (followerIds.length > 0) {
-      //   const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
-      //   if (!notificationResult.success) {
-      //     throw new Error(notificationResult.error);
-      //   }
-      // }
-
-      return null;
+      var response = Post.create(post)
+      return response;
     });
 
     return res.status(201).json({ success: "Post added!", post: result });
   } catch (error) {
-    await t.rollback();
     if (error.message === 'USER_NOT_FOUND') {
       return res.status(404).json({ error: "USER NOT FOUND" });
     }

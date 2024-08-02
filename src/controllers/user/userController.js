@@ -38,7 +38,7 @@ exports.updateUserTagsPreferences = async (req, res) => {
     // Associate tags with the user
     await user.setTags(tagIds);
   
-    res.status(200).json({ success: 'User tag preferences updated successfully' });
+    res.status(201).json({ success: 'User tag preferences updated successfully' });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: error.toString() });

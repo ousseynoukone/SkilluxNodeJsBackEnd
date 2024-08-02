@@ -36,13 +36,22 @@ module.exports = (sequelize, DataTypes) => {
   Post.init({
     title: DataTypes.STRING,
     content: DataTypes.TEXT,
-    readNumber: DataTypes.INTEGER,
-    votesNumber: DataTypes.INTEGER,
+    readNumber: {
+      type:DataTypes.INTEGER,
+      defaultValue:0
+    },
+    votesNumber: {
+      type:DataTypes.INTEGER,
+      defaultValue:0
+    },
     isPublished:{
       type:DataTypes.BOOLEAN,
       defaultValue:true
     },
-    headerImage: DataTypes.STRING,
+    headerImage:{ type:DataTypes.STRING,
+      defaultValue:""
+
+    },
     tags: {
       type: DataTypes.ARRAY(DataTypes.STRING), // Define tags as an array of strings
       allowNull: true,

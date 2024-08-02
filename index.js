@@ -7,6 +7,7 @@ const commentRoutes = require('./src/routes/commentRoutes');
 const moderationRoutes = require('./src/routes/moderationRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const userRoutes = require('./src/routes/userRoutes');
+const path = require('path');
 
 require('dotenv').config(); // Load environment variables from .env file
 
@@ -25,6 +26,8 @@ const PORT = process.env.PORT || 5050;
 const cors = require('cors');
 
 
+// Serve static files from the "medias" directory
+app.use('/medias', express.static(path.join(__dirname, 'medias')));
 
 // Parse JSON request body
 app.use(express.json());

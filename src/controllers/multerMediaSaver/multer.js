@@ -34,7 +34,7 @@ class MulterHelper {
   }
 
   initializeUpload() {
-    const storage = multer.memoryStorage({
+    const storage = multer.diskStorage({
       destination: (req, file, cb) => {
         let basePath = 'medias/';
         const dest = file.fieldname === 'coverImage' ? basePath + 'images/covers' : file.mimetype.startsWith('video') ? basePath + 'videos' : basePath + 'images/contents';
@@ -44,6 +44,7 @@ class MulterHelper {
         cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
       }
     });
+
 
     return multer({
       storage: storage,
