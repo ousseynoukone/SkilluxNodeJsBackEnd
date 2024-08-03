@@ -66,7 +66,8 @@ function getMediaLink(file){
     return "http://"+getServerIP()+":"+PORT+"/"+file.path
 
   }else{
-    return "null";
+    throw new Error("file undefined");
+
   }
 }
 

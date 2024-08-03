@@ -360,11 +360,27 @@ exports.addPost = async (req, res) => {
       post.content = await insertMediasIntoDocument(post.content,paths);
 
       var response = Post.create(post)
+
+            // Get the IDs of the user's followers
+      const followers = await user.getFollowers({ 
+        attributes: ['id'],
+        transaction: t 
+      });
+      const followerIds = followers.map(follower => follower.id);
+
+      // Send notifications to followers
+      if (followerIds.length > 0) {
+        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
+        if (!notificationResult.success) {
+          throw new Error(notificationResult.error);
+        }
+      }
       return response;
     });
 
     return res.status(201).json({ success: "Post added!", post: result });
   } catch (error) {
+    console.log(error)
     if (error.message === 'USER_NOT_FOUND') {
       return res.status(404).json({ error: "USER NOT FOUND" });
     }
