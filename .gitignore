@@ -1,12 +1,9 @@
 node_modules
 .env
 
-medias/images/contents/*
-
-
-medias/images/covers/*
-
-
 medias/videos/*
 
 
+medias/images/contents/*
+
+medias/images/covers/*
