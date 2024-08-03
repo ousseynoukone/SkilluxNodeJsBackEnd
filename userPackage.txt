@@ -1,7 +1,0 @@
-for request  "express" "^4.19.2",
-for api token     "jsonwebtoken": "^9.0.2",
-for reloading server after change   "nodemon": "^3.1.0",
-for postgresql db   "pg": "^8.11.5",
-for postgresql db  "pg-hstore": "^2.3.4",
-for ORM (SQL)  "sequelize": "^6.37.3"
-Body request validation : vinejs/vine

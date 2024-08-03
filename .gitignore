@@ -1,2 +1,15 @@
 node_modules
 .env
+
+medias/images/contents/*.png
+medias/images/contents/*.jpg
+medias/images/contents/*.jpeg
+
+medias/images/covers/*.png
+medias/images/covers/*.jpg
+medias/images/covers/*.jpeg
+
+
+medias/videos/*.mp4
+medias/videos/*.MPEG-4
+

@@ -1,6 +1,9 @@
 const { Op } = require("sequelize");
-const { sequelize } = require("../../db/db");
-const User = require("../../models/User");
+const db = require("../../../db/models/index");
+const {User} = db;
+
+const sequelize = db.sequelize;
+
 
 async function cleanupOldDeactivatedAccount() {
   const t = await sequelize.transaction();

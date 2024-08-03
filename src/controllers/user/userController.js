@@ -1,12 +1,18 @@
-const Notification = require("../../models/Notification");
-const User = require("../../models/User");
+const db = require("../../../db/models/index");
+
+
+const {Notification,sequelize} = db;
+const {User} = db;
+const {Tag} = db;
 const { Op } = require('sequelize');
+const { saveNotification } = require("../heper");
+const NotificationType = require("../../models/dtos/notificationEnum");
 
 
 // UPDATE USER TAGS PREFERENCES
 exports.updateUserTagsPreferences = async (req, res) => {
-    const userId = req.body.userId;
-    const userPreferredTags = req.body.tags;
+  const userId = req.user.id;
+  const tagIds = req.body.tags;
 
     if (!userId) {
       return res.status(404).json({ error: 'NO  USER ID FOUND!' });
@@ -14,11 +20,25 @@ exports.updateUserTagsPreferences = async (req, res) => {
 
     try {
       var user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found!' });
+      }
+
+    // Find tags by tagIds
+    const tags = await Tag.findAll({
+      where: {
+        id: tagIds
+      }
+    });
   
-      user.preferredTags = userPreferredTags;
-      await user.save();
+    if (!tags || tags.length === 0) {
+      return res.status(404).json({ error: 'Tags not found!' });
+    }
+
+    // Associate tags with the user
+    await user.setTags(tagIds);
   
-      res.status(200).json({ success: 'User tag preferences updated successfully' });
+    res.status(201).json({ success: 'User tag preferences updated successfully' });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: error.toString() });
@@ -27,27 +47,38 @@ exports.updateUserTagsPreferences = async (req, res) => {
   };
 
 
-  // GET USER INFORMATION
   exports.getUserInformations = async (req, res) => {
-    const userId = req.params.id;
-
+    const userId = req.user.id;
+  
     if (!userId) {
-      return res.status(404).json({ error: 'NO FOLLOWING USER ID FOUND!' });
+      return res.status(404).json({ error: 'No user found!' });
     }
   
     try {
-      // Find user by primary key
-      const user = await User.findByPk(userId);
+      // Find user by primary key, including associated tags
+      const user = await User.findByPk(userId, {
+        include: [
+          {
+            model: Tag,
+            attributes: ['id', 'libelle', 'score'] // Specify the attributes you want to include from the Tag model
+          }
+        ],
+        attributes: { exclude: ['password'] } // Exclude the password field from the user attributes
+      });
   
       // If user exists
       if (user) {
-        // Create a new object without the password key
-        const userWithoutPassword = Object.fromEntries(
-          Object.entries(user.toJSON()).filter(([key]) => key !== 'password')
-        );
+        // Modify the user object to remove user_tag from each tag
+        const userWithoutTagsUserTag = {
+          ...user.toJSON(),
+          Tags: user.Tags.map(tag => ({
+            id: tag.id,
+            libelle: tag.libelle,
+            score: tag.score
+          }))
+        };
   
-        // Send the modified user object as response
-        return res.status(200).json(userWithoutPassword);
+        return res.status(200).json(userWithoutTagsUserTag);
       } else {
         // If user does not exist, send appropriate response
         return res.status(404).json({ error: 'User not found' });
@@ -57,66 +88,69 @@ exports.updateUserTagsPreferences = async (req, res) => {
       console.error(error);
       return res.status(500).json({ error: error.toString() });
     }
-  }
+  };
   
 
 // Follow user
 exports.followUser = async (req, res) => {
-  const userId = req.params.id;
+  const userIdToFollow = req.params.id;
   const connectedUserId = req.user.id;
-  console.error(connectedUserId)
 
-  if (!userId) {
-    return res.status(404).json({ error: 'NO FOLLOWING USER ID FOUND!' });
+  if (!userIdToFollow) {
+    return res.status(400).json({ error: 'NO FOLLOWING USER ID PROVIDED!' });
   }
+
+  if (connectedUserId == userIdToFollow) {
+    return res.status(400).json({ error: "YOU CAN'T FOLLOW YOURSELF!" });
+  }
+  
+
+  const t = await sequelize.transaction();
 
   try {
-    // Find the connected user by primary key
-    const connectedUser = await User.findByPk(connectedUserId);
+    // Find the connected user and the user to follow
+    const [connectedUser, userToFollow] = await Promise.all([
+      User.findByPk(connectedUserId, { transaction: t }),
+      User.findByPk(userIdToFollow, { transaction: t })
+    ]);
 
-    // If connected user exists
-    if (connectedUser) {
-
-      if(connectedUserId==userId){
-        return res.status(500).json({ error: "CAN'NT FOLLOW YOURSELF !"});
-      }
-
-      // Find the user to follow by primary key
-      const userToFollow = await User.findByPk(userId);
-
-      // If user to follow exists
-      if (userToFollow) {
-        // Add following relationship
-        await connectedUser.addFollowing(userToFollow);
-
-
-        // Notification
-        const fromUser = connectedUserId
-        const toUser = userId
-        const notification =  Notification.create(
-          {
-            ressourceId:toUser,
-            toUserId : toUser,
-            fromUserId : fromUser,
-            type : "follow"
-          }
-        )
-
-        // Send success response
-        return res.status(201).json({ success: 'User Followed' });
-      } else {
-        // If user to follow does not exist, send appropriate response
-        return res.status(404).json({ error: 'User to follow not found' });
-      }
-    } else {
-      // If connected user does not exist, send appropriate response
-      return res.status(404).json({ error: 'Connected user not found' });
+    if (!connectedUser) {
+      await t.rollback();
+      return res.status(404).json({ error: "CONNECTED USER NOT FOUND" });
     }
+
+    if (!userToFollow) {
+      await t.rollback();
+      return res.status(404).json({ error: "USER TO FOLLOW NOT FOUND" });
+    }
+
+    const rawFollowers = await userToFollow.getFollowers({attributes:['id'], transaction: t });
+    const followers = rawFollowers.map(follower=>follower.id)
+    if(followers.includes(connectedUser.id)){
+      await t.rollback();
+      return res.status(500).json({ error: "USER ALREADY FOLLOWED" });
+    }
+
+    // Add following relationship
+    await connectedUser.addFollowing(userToFollow, { transaction: t });
+
+    // Create notification
+    const notificationResult = await saveNotification(connectedUserId, userIdToFollow, connectedUserId,NotificationType.FOLLOW, t);
+    
+    if (!notificationResult.success) {
+      throw new Error(notificationResult.error);
+    }
+
+    await t.commit();
+    return res.status(201).json({ message: "USER FOLLOWED SUCCESSFULLY" });
+
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error.toString() });
+    await t.rollback();
+    console.error('Error in followUser:', error);
+    return res.status(500).json({ error: "AN ERROR OCCURRED WHILE FOLLOWING USER" });
   }
 }
+
 
 // Unfollow user
 exports.unfollowUser = async (req, res) => {

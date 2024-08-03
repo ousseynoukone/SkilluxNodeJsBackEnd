@@ -1,7 +1,8 @@
 const { cleanUpNotificationDate } = require("../../parameters/constants");
 const { Op } = require("sequelize");
-const {sequelize} = require("../../db/db");
-const Notification = require("../../models/Notification");
+const db = require("../../../db/models/index");
+const {Notification} = db;
+const sequelize = db.sequelize;
 
 // clean up old  read notification 
 async function cleanupOldNotifications() {

@@ -1,8 +1,9 @@
 // controllers/moderationController.js
+const db = require("../../../db/models/index");
 
-const Moderation = require("../../models/Moderation");
-const Post = require("../../models/Post");
-const User = require("../../models/User");
+const {Moderation} = db;
+const {Post} =  db;
+const {User} =  db;
 
 // Get all moderations
 exports.getAllModerations = async (req, res) => {
@@ -40,11 +41,13 @@ exports.addModeration = async (req, res) => {
         if(!post){
             return res.status(400).json({ error: "Post not found" });
         }
-        var user = await User.findByPk(req.body.userId)
+        var user = await User.findByPk(req.user.id)
 
         if(!user){
             return res.status(400).json({ error: "User not found" });
         }
+
+        req.body.userId = user.id;
 
         post.isPublished = false;
         post.save()
