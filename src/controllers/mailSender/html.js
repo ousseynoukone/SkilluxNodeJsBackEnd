@@ -1,3 +1,8 @@
+require('dotenv').config(); // Load environment variables from .env file
+const BASE_ENDPOINT = (process.env.BASE_ENDPOINT && process.env.BASE_ENDPOINT.trim() !== "") ? process.env.BASE_ENDPOINT : "/api/v1";
+
+
+
 exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
   const translations = {
     en: {
@@ -158,7 +163,7 @@ exports.renderHtmlResetPasswordForm = (email, token, lang = 'en') => {
             token: token
           };
 
-          fetch('/api/v1/auth/reset-password', {
+          fetch('${BASE_ENDPOINT}/auth/reset-password', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

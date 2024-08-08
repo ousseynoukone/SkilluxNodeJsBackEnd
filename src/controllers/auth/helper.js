@@ -1,5 +1,10 @@
 const {minimumAge} = require("../../parameters/constants");
 const os = require('os');
+require('dotenv').config(); // Load environment variables from .env file
+const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME;
+const PORT = (process.env.PORT && process.env.PORT.trim() !== "") ? process.env.PORT : 5050;
+const BASE_ENDPOINT = (process.env.BASE_ENDPOINT && process.env.BASE_ENDPOINT.trim() !== "") ? process.env.BASE_ENDPOINT : "/api/v1";
+
 
 function isOldEnough(dateString) {
     const [year, month, day] = dateString.split('-').map(Number);
@@ -56,17 +61,30 @@ function convertToExpireDate(timeStr) {
   }
 }
 
-function getServerIP() {
-  const networkInterfaces = os.networkInterfaces();
-  for (const interfaceName in networkInterfaces) {
-    const interfaceInfo = networkInterfaces[interfaceName];
-    for (const info of interfaceInfo) {
-      if (info.family === 'IPv4' && !info.internal) {
-        return info.address;
+function getServerHostNameOrIp() {
+
+  if(SERVER_HOSTNAME != undefined && SERVER_HOSTNAME.length>0){
+   let server_host = SERVER_HOSTNAME;
+
+    return `${server_host}:${PORT}${BASE_ENDPOINT}/`;
+  }else{
+
+    const networkInterfaces = os.networkInterfaces();
+    for (const interfaceName in networkInterfaces) {
+      const interfaceInfo = networkInterfaces[interfaceName];
+      for (const info of interfaceInfo) {
+        if (info.family === 'IPv4' && !info.internal) {
+         
+         return  `http://${info.address}:${PORT}${BASE_ENDPOINT}/`;
+
+        }
       }
     }
   }
-  return '127.0.0.1'; // Default to localhost if no external IP is found
+
+ 
+
+
 }
 
 
@@ -94,7 +112,7 @@ function getLoginErrorMessage(errorType, lang) {
   return messages[errorType][lang] || messages[errorType]['en']; // Default to English if language is not defined
 }
 
-module.exports = {isOldEnough,convertToExpireDate,getServerIP,getLoginErrorMessage};
+module.exports = {isOldEnough,convertToExpireDate,getServerHostNameOrIp,getLoginErrorMessage};
 
 
 

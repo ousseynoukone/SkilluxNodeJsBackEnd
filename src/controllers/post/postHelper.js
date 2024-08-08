@@ -58,13 +58,11 @@ async function insertMediasIntoDocument(content, mediaPathList) {
   return jsonToString;
 }
 
-const PORT = process.env.PORT 
-const {getServerIP} = require('../auth/helper');
+const {getServerHostNameOrIp} = require('../auth/helper');
 
 function getMediaLink(file){
   if(file != undefined){
-    return "http://"+getServerIP()+":"+PORT+"/"+file.path
-
+    return  `${getServerHostNameOrIp()}/${file.path}`;
   }else{
     throw new Error("file undefined");
 
