@@ -47,7 +47,6 @@ class MulterHelper {
           dest = path.join(basePath, 'images', 'contents');
         }
 
-        console.log(file)
 
         // Create the directory if it doesn't exist
         fs.mkdir(dest, { recursive: true }, (err) => {

@@ -33,11 +33,12 @@ async function insertMediasIntoDocument(content, mediaPathList) {
   let pathIndex = 0;
 
   for (const op of list) {
-    if (op.insert && typeof op.insert === 'object' && (op.insert.image || op.insert.video)) {
+    if (op.insert && (op.insert.image || op.insert.video)) {
       const mediaType = op.insert.image ? 'image' : 'video';
       if (pathIndex < mediaPathList.length) {
-       
-        const newOp = { insert: { [mediaType]: mediaPathList[pathIndex]} };
+        const {insert, attributes } = op;
+
+        const newOp = { insert: { [mediaType]: mediaPathList[pathIndex]}, attributes };
         newOperations.push(newOp);
         pathIndex++;
       
@@ -50,10 +51,9 @@ async function insertMediasIntoDocument(content, mediaPathList) {
     }
   }
 
-  // Create a new delta with updated operations
-  const newDelta = new Delta(newOperations);
-  const newDocument = newDelta; // Assuming document and delta are interchangeable in your case
-  const jsonToString = DocumentConverter.convertToJsonString(newDocument);
+
+
+  const jsonToString = DocumentConverter.convertToJsonString(newOperations);
 
   return jsonToString;
 }

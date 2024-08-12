@@ -356,9 +356,11 @@ exports.addPost = async (req, res) => {
         let path = getMediaLink(file)
         paths.push(path)   
       });
-      post.headerImage = getMediaLink(coverImage)
-      post.content = await insertMediasIntoDocument(post.content,paths);
 
+      if(coverImage!=undefined){
+        post.headerImage = getMediaLink(coverImage)
+      }
+      post.content = await insertMediasIntoDocument(post.content,paths);
       var response = Post.create(post)
 
             // Get the IDs of the user's followers
