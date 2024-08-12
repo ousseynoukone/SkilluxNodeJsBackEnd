@@ -22,9 +22,11 @@ const { cleanupOldBlackListedToken } = require('./src/controllers/cronJobs/black
 const { cleanupOldDeactivatedAccount } = require('./src/controllers/cronJobs/deleteOldDeactivatedAccount');
 
 const app = express();
-const PORT = process.env.PORT || 5050;
+const PORT = (process.env.PORT && process.env.PORT.trim() !== "") ? process.env.PORT : 5050;
+
 const cors = require('cors');
 
+const BASE_ENDPOINT = (process.env.BASE_ENDPOINT && process.env.BASE_ENDPOINT.trim() !== "") ? process.env.BASE_ENDPOINT : "/api/v1";
 
 // Serve static files from the "medias" directory
 app.use('/medias', express.static(path.join(__dirname, 'medias')));
@@ -58,13 +60,13 @@ app.listen(PORT, async () => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Mount your routes
-app.use('/api/v1', authRoutes);
-app.use('/api/v1', postRoutes);
-app.use('/api/v1', tagRoutes);
-app.use('/api/v1', commentRoutes);
-app.use('/api/v1', moderationRoutes);
-app.use('/api/v1', notificationRoutes);
-app.use('/api/v1', userRoutes);
+app.use(BASE_ENDPOINT, authRoutes);
+app.use(BASE_ENDPOINT, postRoutes);
+app.use(BASE_ENDPOINT, tagRoutes);
+app.use(BASE_ENDPOINT, commentRoutes);
+app.use(BASE_ENDPOINT, moderationRoutes);
+app.use(BASE_ENDPOINT, notificationRoutes);
+app.use(BASE_ENDPOINT, userRoutes);
 
 
 // ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////

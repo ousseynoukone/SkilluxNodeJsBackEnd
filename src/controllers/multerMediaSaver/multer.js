@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 class MulterHelper {
   constructor() {
@@ -37,8 +38,23 @@ class MulterHelper {
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
         let basePath = 'medias/';
-        const dest = file.fieldname === 'coverImage' ? basePath + 'images/covers' : file.mimetype.startsWith('video') ? basePath + 'videos' : basePath + 'images/contents';
-        cb(null, dest);
+        let dest;
+        if (file.fieldname === 'coverImage') {
+          dest = path.join(basePath, 'images', 'covers');
+        } else if (file.mimetype.startsWith('video')) {
+          dest = path.join(basePath, 'videos');
+        } else {
+          dest = path.join(basePath, 'images', 'contents');
+        }
+
+
+        // Create the directory if it doesn't exist
+        fs.mkdir(dest, { recursive: true }, (err) => {
+          if (err) {
+            return cb(err, null);
+          }
+          cb(null, dest);
+        });
       },
       filename: (req, file, cb) => {
         cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);

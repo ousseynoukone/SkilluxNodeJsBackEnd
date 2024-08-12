@@ -1,5 +1,7 @@
 
-const {getServerIP} = require('../auth/helper');
+const {getServerHostNameOrIp} = require('../auth/helper');
+
+
 class MailSenderContent {
     constructor(token) {
         this.token = token;
@@ -64,7 +66,7 @@ class MailSenderContent {
                     <div class="email-body">
                         Click the following link to reset your password:
                         <br><br>
-                        <a href="http://${getServerIP()}:5050/api/v1/auth/reset-password/${this.token}" class="email-link" style="color: white !important;">Reset Password</a>
+                        <a href="${getServerHostNameOrIp()}reset-password/${this.token}" class="email-link" style="color: white !important;">Reset Password</a>
                         <br><br>
                         This link won't be available after 5 minutes.
                     </div>
@@ -128,7 +130,7 @@ class MailSenderContent {
                     <div class="email-body">
                         Cliquez sur le lien suivant pour réinitialiser votre mot de passe :
                         <br><br>
-                        <a href="http://${getServerIP()}:5050/api/v1/auth/reset-password/${this.token}" class="email-link" style="color: white !important;">Réinitialiser le mot de passe</a>
+                        <a href="${getServerHostNameOrIp()}auth/reset-password/${this.token}" class="email-link" style="color: white !important;">Réinitialiser le mot de passe</a>
                         <br><br>
                         Ce lien ne sera plus disponible après 5 minutes.
                     </div>
@@ -200,7 +202,7 @@ class MailSenderContent {
                     <div class="email-body">
                         Click the following link to verify your email address:
                         <br><br>
-                        <a href="http://${getServerIP()}:5050/api/v1/auth/account-activation/${this.token}" class="email-link" style="color: white !important;">Verify Email</a>
+                        <a href="${getServerHostNameOrIp()}auth/account-activation/${this.token}" class="email-link" style="color: white !important;">Verify Email</a>
                         <br><br>
                         This link won't be available after 10 minutes.
                     </div>
@@ -264,7 +266,7 @@ class MailSenderContent {
                     <div class="email-body">
                         Cliquez sur le lien suivant pour vérifier votre adresse e-mail :
                         <br><br>
-                        <a href="http://${getServerIP()}:5050/api/v1/auth/account-activation/${this.token}" class="email-link" style="color: white !important;">Vérifier l'e-mail</a>
+                        <a href="${getServerHostNameOrIp()}auth/account-activation/${this.token}" class="email-link" style="color: white !important;">Vérifier l'e-mail</a>
                         <br><br>
                         Ce lien ne sera plus disponible après 10 minutes.
                     </div>
