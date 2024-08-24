@@ -3,10 +3,13 @@ const db = require("../../../db/models/index");
 
 const {Notification,sequelize} = db;
 const {User} = db;
+const {Comment} = db;
 const {Tag} = db;
+const {Post} = db;
 const { Op } = require('sequelize');
 const { saveNotification } = require("../heper");
 const NotificationType = require("../../models/dtos/notificationEnum");
+const { attribute } = require("@sequelize/core/_non-semver-use-at-your-own-risk_/expression-builders/attribute.js");
 
 
 // UPDATE USER TAGS PREFERENCES
@@ -48,7 +51,7 @@ exports.updateUserTagsPreferences = async (req, res) => {
 
 
   exports.getUserInformations = async (req, res) => {
-    const userId = req.user.id;
+    const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
   
     if (!userId) {
       return res.status(404).json({ error: 'No user found!' });
@@ -61,17 +64,36 @@ exports.updateUserTagsPreferences = async (req, res) => {
           {
             model: Tag,
             attributes: ['id', 'libelle', 'score'] // Specify the attributes you want to include from the Tag model
-          }
+          },
+
         ],
-        attributes: { exclude: ['password'] } // Exclude the password field from the user attributes
+        attributes: { exclude: ['password'] , include: [
+          [
+            sequelize.literal(`(SELECT COUNT(*) FROM posts WHERE "userId" = ${userId})`),
+            'nbPosts'
+          ], 
+          [
+            sequelize.literal(`(SELECT COUNT(*) FROM user_followings WHERE user_followings."followingId" = ${userId})`),
+            'nbFollowers'
+          ],        
+          [
+            sequelize.literal(`(SELECT COUNT(*) FROM user_followings WHERE user_followings."followerId" = ${userId})`),
+            'nbFollowings'
+          ], 
+        ]
+        } 
       });
-  
+
       // If user exists
       if (user) {
+        let jsonUser = user.toJSON();
         // Modify the user object to remove user_tag from each tag
         const userWithoutTagsUserTag = {
-          ...user.toJSON(),
-          Tags: user.Tags.map(tag => ({
+          ...jsonUser,
+          nbPosts: parseInt(jsonUser.nbPosts, 10),
+          nbFollowers: parseInt(jsonUser.nbFollowers, 10),
+          nbFollowings: parseInt(jsonUser.nbFollowings, 10),
+          Tags: jsonUser.Tags.map(tag => ({
             id: tag.id,
             libelle: tag.libelle,
             score: tag.score
@@ -89,7 +111,75 @@ exports.updateUserTagsPreferences = async (req, res) => {
       return res.status(500).json({ error: error.toString() });
     }
   };
+
+
   
+exports.getUserPosts = async (req, res) => {
+    // Parse and validate limit
+    const limit = parseInt(req.params.limit, 10) || 10;
+
+    // Parse and validate cursor
+    const rawCursor = req.params.cursor;
+    const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
+
+    // Extract user ID from the authenticated request
+    const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
+
+    // Find the user by their ID
+    const user = await User.findByPk(userId);
+
+    // If user does not exist, return 404 error
+    if (!user) {
+      return res.status(404).json({ error: "USER NOT FOUND" });
+    }
+
+
+
+    // Construct the query for finding posts
+    const getPostQuery = {
+      include: [
+        { model: Comment, attributes: ['id'] },
+      ],
+      limit: limit+1,
+      where: {
+          ...(cursor ? { createdAt: { [Op.lt]: cursor } } : {})
+             
+      },
+      order: [['createdAt', 'DESC']],
+    };
+
+
+
+    const userPost = await user.getPosts(getPostQuery)
+
+
+    const hasMore = userPost.length > limit;
+    const posts = hasMore ? userPost.slice(0, -1) : userPost;
+
+    // Transform results to include the number of comments
+    const postsWithNumberOfComments = posts.map(post => {
+      const commentCount = post.Comments.length;
+      const { Comments, ...postData } = post.toJSON();
+      return { ...postData, commentCount };
+    });
+
+    // Determine the next cursor
+    const nextCursor =
+      posts.length > 0
+        ? posts[posts.length - 1].createdAt
+        : null;
+
+    // Send the response
+    return res.status(200).json({
+      posts: postsWithNumberOfComments,
+      nextCursor:nextCursor,
+      hasMore:hasMore
+    });
+
+  
+}
+
+
 
 // Follow user
 exports.followUser = async (req, res) => {
@@ -156,6 +246,7 @@ exports.followUser = async (req, res) => {
 exports.unfollowUser = async (req, res) => {
   const userId = req.params.id;
   const connectedUserId = req.user.id;
+  console.log("here")
 
   if (!userId) {
     return res.status(404).json({ error: 'NO USER ID FOUND!' });
@@ -197,9 +288,15 @@ exports.unfollowUser = async (req, res) => {
 
 
 
-// Retrieve Followers List
+// Retrieve Followers List with Pagination
 exports.getUserFollowers = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
+  // Parse and validate limit
+  const limit = parseInt(req.params.limit, 10) || 10;
+
+  // Parse and validate cursor
+  const rawCursor = req.params.cursor;
+  const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
 
   try {
     // Find the user by primary key
@@ -207,13 +304,28 @@ exports.getUserFollowers = async (req, res) => {
 
     // If user exists
     if (user) {
-      // Retrieve the list of followers using Sequelize association method
-      const followers = await user.getFollowers({
-        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture']
-      });
+      // Construct the query for retrieving followers
+      const getFollowersQuery = {
+        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture'],
+        limit: limit + 1, // Fetch one extra to determine if there are more followers
+        where: cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+        order: [['createdAt', 'DESC']],
+      };
 
-      // Send the list of followers as response
-      return res.status(200).json(followers);
+      const followers = await user.getFollowers(getFollowersQuery);
+
+      const hasMore = followers.length > limit;
+      const paginatedFollowers = hasMore ? followers.slice(0, -1) : followers;
+
+      // Determine the next cursor
+      const nextCursor = paginatedFollowers.length > 0 ? paginatedFollowers[paginatedFollowers.length - 1].createdAt : null;
+
+      // Send the response
+      return res.status(200).json({
+        followers: paginatedFollowers,
+        nextCursor: nextCursor,
+        hasMore: hasMore
+      });
     } else {
       // If user does not exist, send appropriate response
       return res.status(404).json({ error: 'User not found' });
@@ -224,9 +336,17 @@ exports.getUserFollowers = async (req, res) => {
   }
 };
 
-// Retrieve Following List
+
+// Retrieve Following List with Pagination
 exports.getUserFollowing = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
+
+  // Parse and validate limit
+  const limit = parseInt(req.params.limit, 10) || 10;
+
+  // Parse and validate cursor
+  const rawCursor = req.params.cursor;
+  const cursor = rawCursor !== '0' ? new Date(rawCursor) : null;
 
   try {
     // Find the user by primary key
@@ -234,13 +354,28 @@ exports.getUserFollowing = async (req, res) => {
 
     // If user exists
     if (user) {
-      // Retrieve the list of following users using Sequelize association method
-      const following = await user.getFollowing({
-        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture']
-      });
+      // Construct the query for retrieving following users
+      const getFollowingQuery = {
+        attributes: ['id', 'fullName', 'username', 'email', 'profilePicture'],
+        limit: limit + 1, // Fetch one extra to determine if there are more following users
+        where: cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+        order: [['createdAt', 'DESC']],
+      };
 
-      // Send the list of following users as response
-      return res.status(200).json(following);
+      const following = await user.getFollowing(getFollowingQuery);
+
+      const hasMore = following.length > limit;
+      const paginatedFollowing = hasMore ? following.slice(0, -1) : following;
+
+      // Determine the next cursor
+      const nextCursor = paginatedFollowing.length > 0 ? paginatedFollowing[paginatedFollowing.length - 1].createdAt : null;
+
+      // Send the response
+      return res.status(200).json({
+        following: paginatedFollowing,
+        nextCursor: nextCursor,
+        hasMore: hasMore
+      });
     } else {
       // If user does not exist, send appropriate response
       return res.status(404).json({ error: 'User not found' });
@@ -250,11 +385,12 @@ exports.getUserFollowing = async (req, res) => {
     return res.status(500).json({ error: error.toString() });
   }
 };
+
 
 
 // Get number of followers for a user
 exports.getUserNbFollowers = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
 
   try {
     // Find the user by primary key
@@ -279,7 +415,7 @@ exports.getUserNbFollowers = async (req, res) => {
 
 // Get number of users the user is following
 exports.getUserNbFollowing = async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.params.userId == '0' ? req.user.id : req.params.userId;
 
   try {
     // Find the user by primary key
@@ -350,5 +486,44 @@ exports.searchUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error.toString() });
+  }
+
+
+};
+
+// Check if the connected user is following the target user
+exports.isFollower = async (req, res) => {
+  const targetUserId = req.params.id; // ID of the user to check
+  const connectedUserId = req.user.id; // ID of the connected user
+
+  if (!targetUserId) {
+    return res.status(400).json({ error: 'NO TARGET USER ID PROVIDED!' });
+  }
+
+  if (connectedUserId == targetUserId) {
+    return res.status(400).json({ error: "YOU CAN'T FOLLOW YOURSELF!" });
+  }
+
+  try {
+    // Find the connected user
+    const connectedUser = await User.findByPk(connectedUserId);
+    if (!connectedUser) {
+      return res.status(404).json({ error: 'Connected user not found' });
+    }
+
+    // Find the target user
+    const targetUser = await User.findByPk(targetUserId);
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Target user not found' });
+    }
+
+    // Check if the connected user is following the target user
+    const followers = await targetUser.getFollowers({ attributes: ['id'] });
+    const isFollowing = followers.some(follower => follower.id === connectedUserId);
+
+    return res.status(200).json({ isFollowing });
+  } catch (error) {
+    console.error('Error in isFollower:', error);
+    return res.status(500).json({ error: 'AN ERROR OCCURRED WHILE CHECKING FOLLOW STATUS' });
   }
 };

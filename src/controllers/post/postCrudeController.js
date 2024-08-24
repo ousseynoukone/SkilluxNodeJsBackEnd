@@ -348,7 +348,6 @@ exports.addPost = async (req, res) => {
 
       var post=req.body;
       post.userId = userId;
-
       var paths = []
 
       mediaFiles.forEach(async file => {
