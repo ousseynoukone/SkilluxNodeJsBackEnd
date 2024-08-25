@@ -22,6 +22,8 @@ router.post("/basic/posts",   MulterHelper.upload.fields([
   { name: 'coverImage', maxCount: 1 },
   { name: 'medias' }  
 ]),authenticateToken, postAddingValidator, addPost);
+
+
 router.put("/basic/posts/:id", authenticateToken, postUpdateValidator, updatePost);
 router.delete("/basic/posts/:id", authenticateToken, deletePost);
 

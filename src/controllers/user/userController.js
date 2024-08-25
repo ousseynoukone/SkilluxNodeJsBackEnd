@@ -10,6 +10,7 @@ const { Op } = require('sequelize');
 const { saveNotification } = require("../heper");
 const NotificationType = require("../../models/dtos/notificationEnum");
 const { attribute } = require("@sequelize/core/_non-semver-use-at-your-own-risk_/expression-builders/attribute.js");
+const {getMediaLink} =  require("../post/postHelper");
 
 
 // UPDATE USER TAGS PREFERENCES
@@ -525,5 +526,109 @@ exports.isFollower = async (req, res) => {
   } catch (error) {
     console.error('Error in isFollower:', error);
     return res.status(500).json({ error: 'AN ERROR OCCURRED WHILE CHECKING FOLLOW STATUS' });
+  }
+};
+
+
+exports.updateUser = async (req, res) => {
+  const userId = req.user.id;
+  const { fullName, username, email,profession} = req.body;
+
+  if (!userId) {
+    return res.status(404).json({ error: 'No user ID found!' });
+  }
+
+  try {
+    // Find the user by primary key
+    const user = await User.findByPk(userId);
+
+    // If user exists
+    if (user) {
+      // Update the user's details
+      await user.save({
+        fullName: fullName || user.fullName,
+        username: username || user.username,
+        email: email || user.email,
+        profession: profession || user.profession,
+      });
+
+      // Send success response
+      return res.status(200).json({ success: 'User details updated successfully' });
+    } else {
+      // If user does not exist
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
+
+
+exports.updateProfilePicture = async (req, res) => {
+  const userId = req.user.id;
+
+  if (!userId) {
+    return res.status(404).json({ error: 'No user ID found!' });
+  }
+
+  try {
+    // Find the user by primary key
+    const user = await User.findByPk(userId);
+
+
+    // If user exists
+    if (user) {
+
+      const profilePicture = req.files['profilePicture'][0] ;
+  
+  
+      if(profilePicture!=undefined){
+        user.profilePicture  = getMediaLink(profilePicture);
+      }
+
+      // Update the user's details
+      await user.save();
+
+      // Send success response
+      return res.status(200).json({ success: 'User profile picture details updated successfully' });
+    } else {
+      // If user does not exist
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.toString() });
+  }
+};
+
+exports.removeUserProfilePicture = async (req, res) => {
+  const userId = req.user.id;
+
+  if (!userId) {
+    return res.status(404).json({ error: 'No user ID found!' });
+  }
+
+  try {
+    // Find the user by primary key
+    const user = await User.findByPk(userId);
+
+    // If user exists
+    if (user) {
+      // Clear the profilePicture field
+      user.profilePicture = null;
+
+      // Save the updated user record
+      await user.save();
+
+      // Send success response
+      return res.status(200).json({ success: 'User profile picture removed successfully' });
+    } else {
+      // If user does not exist
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: error.toString() });
   }
 };

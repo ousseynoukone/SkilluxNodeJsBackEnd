@@ -1,9 +1,7 @@
 const { body, validationResult } = require('express-validator');
 
 exports.updateUserTagsPreferencesValidator = [
-  body('userId')
-    .notEmpty().withMessage('User ID is required')
-    .isInt().withMessage('UserID must be an integer'),
+
 
   body('tags')
     .notEmpty().withMessage('Tags array is required')
@@ -18,14 +16,27 @@ exports.updateUserTagsPreferencesValidator = [
   },
 ];
 
-exports.updateUserTagsPreferencesUpdateValidator = [
-  body('userId')
-    .optional()
-    .isInt().withMessage('User ID must be an integer'),
 
-  body('tags')
+
+
+exports.updateUserValidator = [
+  body('fullName')
     .optional()
-    .isArray().withMessage('Tags should be an array'),
+    .isString().withMessage('Full Name must be a string')
+    .isLength({ min: 1 }).withMessage('Full Name cannot be empty'),
+
+  body('username')
+    .optional()
+    .isString().withMessage('Username must be a string')
+    .isLength({ min: 1 }).withMessage('Username cannot be empty'),
+
+  body('email')
+    .optional()
+    .isEmail().withMessage('Email must be a valid email address'),
+
+    body('profession')
+    .optional()
+    .isURL().withMessage('Profile Picture must be a valid URL'),
 
   (req, res, next) => {
     const errors = validationResult(req);
