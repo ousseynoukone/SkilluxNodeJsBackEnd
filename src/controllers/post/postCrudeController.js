@@ -8,7 +8,9 @@ const { checkForTags } = require("./postController");
 const { Op ,Sequelize} = require('sequelize');
 const NotificationType = require("../../models/dtos/notificationEnum");
 const sequelize = db.sequelize;
-const {insertMediasIntoDocument,getMediaLink} =  require("./postHelper")
+const {insertMediasIntoDocument,getMediaLink, extractMediaUrlsFromDocument} =  require("./postHelper")
+const deleteLocalImageFromUrl = require("../multerMediaSaver/helper");
+
 
 // FUNCTION TO GET FOLLOWED TAGS' POSTS WITH CURSOR PAGINATION
 exports.getRecommandedTagsPost = async (req, res) => {
@@ -407,15 +409,47 @@ exports.updatePost = async (req, res) => {
 }
 
 exports.deletePost = async (req, res) => {
-    try {
-        const post = await Post.findByPk(req.params.id);
-        if (!post) {
-            return res.status(404).json({ error: "Post not found" });
-        }
-        
-        await post.destroy();
-        return res.status(200).json({ success: "Post deleted!" });
-    } catch (error) {
-        return res.status(500).json({ error: error.toString() });
-    }
-}
+  try {
+      const post = await Post.findByPk(req.params.id);
+      if (!post) {
+          return res.status(404).json({ error: "Post not found" });
+      }
+
+      // Delete the cover image
+      const coverImageDeletionResult = await deleteLocalImageFromUrl(post.coverImage);
+
+      if (!coverImageDeletionResult) {
+          console.info({ info: "Cover image do not exist, passsing..." });
+      }
+
+      // Extract media links from content
+      const mediaLinks = extractMediaUrlsFromDocument(post.content);
+
+      if (mediaLinks.length > 0) {
+          // Delete all media links
+          const deletionResults = await Promise.all(mediaLinks.map(async (link) => {
+              try {
+                  return await deleteLocalImageFromUrl(link);
+              } catch (error) {
+                  console.error(`Failed to delete media link ${link}: ${error}`);
+                  return false;
+              }
+          }));
+
+          const allDeletionsSuccessful = deletionResults.every(result => result);
+
+          if (!allDeletionsSuccessful) {
+              return res.status(500).json({ error: "Failed to delete some media links" });
+          }
+      }
+
+      // Delete the post
+      await post.destroy();
+
+      return res.status(200).json({ success: "Post deleted!" });
+
+  } catch (error) {
+      return res.status(500).json({ error: error.toString() });
+  }
+};
+

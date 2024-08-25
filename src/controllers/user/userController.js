@@ -11,6 +11,7 @@ const { saveNotification } = require("../heper");
 const NotificationType = require("../../models/dtos/notificationEnum");
 const { attribute } = require("@sequelize/core/_non-semver-use-at-your-own-risk_/expression-builders/attribute.js");
 const {getMediaLink} =  require("../post/postHelper");
+const deleteLocalImageFromUrl = require("../multerMediaSaver/helper");
 
 
 // UPDATE USER TAGS PREFERENCES
@@ -615,14 +616,20 @@ exports.removeUserProfilePicture = async (req, res) => {
 
     // If user exists
     if (user) {
+      result = await deleteLocalImageFromUrl(user.profilePicture);
+      if(result){
       // Clear the profilePicture field
       user.profilePicture = null;
 
       // Save the updated user record
       await user.save();
-
+            
       // Send success response
       return res.status(200).json({ success: 'User profile picture removed successfully' });
+      }else{
+        return res.status(404).json({ error: 'Image not found' });
+      }
+
     } else {
       // If user does not exist
       return res.status(404).json({ error: 'User not found' });
