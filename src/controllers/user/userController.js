@@ -582,8 +582,9 @@ exports.updateProfilePicture = async (req, res) => {
     if (user) {
 
       const profilePicture = req.files['profilePicture'][0] ;
-  
-  
+      
+      await deleteLocalImageFromUrl(user.profilePicture);
+
       if(profilePicture!=undefined){
         user.profilePicture  = getMediaLink(profilePicture);
       }
