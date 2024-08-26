@@ -533,7 +533,7 @@ exports.isFollower = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const userId = req.user.id;
-  const { fullName, username, email,profession} = req.body;
+  const { fullName, email,profession} = req.body;
 
   if (!userId) {
     return res.status(404).json({ error: 'No user ID found!' });
@@ -546,12 +546,12 @@ exports.updateUser = async (req, res) => {
     // If user exists
     if (user) {
       // Update the user's details
-      await user.save({
+      await user.update({
         fullName: fullName || user.fullName,
-        username: username || user.username,
         email: email || user.email,
         profession: profession || user.profession,
       });
+      console.log(user.toJSON())
 
       // Send success response
       return res.status(200).json({ success: 'User details updated successfully' });

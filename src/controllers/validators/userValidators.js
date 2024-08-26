@@ -25,10 +25,6 @@ exports.updateUserValidator = [
     .isString().withMessage('Full Name must be a string')
     .isLength({ min: 1 }).withMessage('Full Name cannot be empty'),
 
-  body('username')
-    .optional()
-    .isString().withMessage('Username must be a string')
-    .isLength({ min: 1 }).withMessage('Username cannot be empty'),
 
   body('email')
     .optional()
@@ -36,7 +32,7 @@ exports.updateUserValidator = [
 
     body('profession')
     .optional()
-    .isURL().withMessage('Profile Picture must be a valid URL'),
+    .isLength({ min: 1 }).withMessage('profession Name cannot be empty'),
 
   (req, res, next) => {
     const errors = validationResult(req);
