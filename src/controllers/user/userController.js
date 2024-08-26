@@ -551,6 +551,7 @@ exports.updateUser = async (req, res) => {
         email: email || user.email,
         profession: profession || user.profession,
       });
+      
 
       // Send success response
       return res.status(200).json({ success: 'User details updated successfully' });
