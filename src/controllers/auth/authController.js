@@ -122,10 +122,11 @@ exports.login = async (req, res)=>{
     }
     
     user.lang=lang;
-    user.save();
     if(user.profession==null || user.profession==undefined || user.profession=="" ){
       user.profession = lang == 'en' ? "New user" : "Nouveau Utilisateur";
     }
+    user.save();
+
     const acessToken = generateAccessToken(user)
     const refreshToken = generateRefreshToken(user)
     const loginResponse = getLoginResponseDto(user,acessToken,refreshToken)
