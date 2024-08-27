@@ -25,11 +25,21 @@ const app = express();
 const PORT = (process.env.PORT && process.env.PORT.trim() !== "") ? process.env.PORT : 5050;
 
 const cors = require('cors');
+// Cors setting up 
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
+
+
+
+
 
 const BASE_ENDPOINT = (process.env.BASE_ENDPOINT && process.env.BASE_ENDPOINT.trim() !== "") ? process.env.BASE_ENDPOINT : "/api/v1";
 
 // Serve static files from the "medias" directory
-app.use('/medias', express.static(path.join(__dirname, 'medias')));
+app.use(BASE_ENDPOINT+'/medias', express.static(path.join(__dirname, 'medias')));
 
 // Parse JSON request body
 app.use(express.json());
@@ -37,11 +47,12 @@ app.use(express.json());
 // Parse URL-encoded request body for html post form
 app.use(express.urlencoded({ extended: true }));
 
-// To use cors and allow all origins
-app.use(cors())
+
+
 
 app.listen(PORT, async () => {
   console.log("Server running on port "+PORT);
+
   console.log('Swagger UI Express server is running on http://localhost:5050/api-docs');
   try {
     await db.sequelize.authenticate();

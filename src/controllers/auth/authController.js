@@ -122,10 +122,15 @@ exports.login = async (req, res)=>{
     }
     
     user.lang=lang;
+    if(user.profession==null || user.profession==undefined || user.profession=="" ){
+      user.profession = lang == 'en' ? "New user" : "Nouveau Utilisateur";
+    }
     user.save();
+
     const acessToken = generateAccessToken(user)
     const refreshToken = generateRefreshToken(user)
     const loginResponse = getLoginResponseDto(user,acessToken,refreshToken)
+    
 
     return res.status(200).json({ success: 'Login successful', ...loginResponse} );
 

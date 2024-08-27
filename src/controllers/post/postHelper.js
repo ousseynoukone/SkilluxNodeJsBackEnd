@@ -31,7 +31,7 @@ async function insertMediasIntoDocument(content, mediaPathList) {
   const list = delta.ops;
   const newOperations = [];
   let pathIndex = 0;
-
+  
   for (const op of list) {
     if (op.insert && (op.insert.image || op.insert.video)) {
       const mediaType = op.insert.image ? 'image' : 'video';
@@ -52,17 +52,38 @@ async function insertMediasIntoDocument(content, mediaPathList) {
   }
 
 
-
   const jsonToString = DocumentConverter.convertToJsonString(newOperations);
-
   return jsonToString;
+}
+
+/**
+ * Extracts a list of image and video URLs from a Delta document content into a single array.
+ * @param {string} content - The JSON string of the Delta document.
+ * @returns {string[]} - An array of media URLs (both images and videos).
+ */
+function extractMediaUrlsFromDocument(content) {
+  const document = DocumentConverter.convertToDocument(content);
+  const mediaUrls = [];
+
+  document.ops.forEach(op => {
+    if (op.insert) {
+      if (op.insert.image) {
+        mediaUrls.push(op.insert.image);
+      }
+      if (op.insert.video) {
+        mediaUrls.push(op.insert.video);
+      }
+    }
+  });
+
+  return mediaUrls;
 }
 
 const {getServerHostNameOrIp} = require('../auth/helper');
 
 function getMediaLink(file){
   if(file != undefined){
-    return  `${getServerHostNameOrIp()}/${file.path}`;
+    return  `${getServerHostNameOrIp()}${file.path}`;
   }else{
     throw new Error("file undefined");
 
@@ -71,4 +92,4 @@ function getMediaLink(file){
 
 
 
-module.exports = {getStringThatAreInAAndNotInB,getStringThatAreInAAndInB,insertMediasIntoDocument,getMediaLink}
+module.exports = {getStringThatAreInAAndNotInB,getStringThatAreInAAndInB,insertMediasIntoDocument,getMediaLink,extractMediaUrlsFromDocument}

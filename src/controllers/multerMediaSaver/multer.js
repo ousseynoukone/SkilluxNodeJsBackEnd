@@ -43,7 +43,10 @@ class MulterHelper {
           dest = path.join(basePath, 'images', 'covers');
         } else if (file.mimetype.startsWith('video')) {
           dest = path.join(basePath, 'videos');
-        } else {
+        } else if(file.fieldname === 'profilePicture') {
+          dest = path.join(basePath, 'images', 'profilePictures');
+        }
+        else {
           dest = path.join(basePath, 'images', 'contents');
         }
 
