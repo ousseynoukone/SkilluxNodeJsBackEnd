@@ -1,4 +1,4 @@
-# Skillux Mobile App (Back End)
+# Skillux Mobile App (Back End - NODE JS)
 
 Skillux is a mobile application designed to connect learners and experts in various fields, facilitating knowledge sharing and skill development.
 
