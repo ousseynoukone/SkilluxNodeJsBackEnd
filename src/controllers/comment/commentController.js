@@ -2,6 +2,7 @@ const db = require("../../../db/models/index");
 const {Comment} =  db;
 const {Notification} = db;
 const {User} = db;
+const {UserLike} = db;
 const { Sequelize, QueryTypes } = require('sequelize');
 const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
@@ -25,10 +26,12 @@ const NotificationType = require("../../models/dtos/notificationEnum");
 
 
 exports.getAllTopLevelComments = async (req, res) => {
+
   try {
     const postId = req.params.postId;
     const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
     const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+    
 
     const result = await sequelize.query(
                 `
@@ -40,6 +43,9 @@ exports.getAllTopLevelComments = async (req, res) => {
                       c."createdAt",
                       c."like",
                       c."parentId",
+                      c."userId",
+                      c."postId",
+
                       0 AS "level",
                       ARRAY[c."id"] AS "path"
                     FROM comments c
@@ -54,6 +60,9 @@ exports.getAllTopLevelComments = async (req, res) => {
                       c."createdAt",
                       c."like",
                       c."parentId",
+                      c."userId",
+                      c."postId",
+
                       cte."level" + 1 AS "level",
                       cte."path" || ARRAY[c."id"] AS "path"
                     FROM comments c
@@ -62,11 +71,18 @@ exports.getAllTopLevelComments = async (req, res) => {
 
 
                   SELECT
-                    id,
-                    text,
-                    "isModified",
-                    "createdAt",
-                    "like",
+                    cte.id,
+                    cte.text,
+                    cte."isModified",
+                    cte."createdAt",
+                    cte."like",
+                    cte."userId",
+                    cte."postId",
+                    u."username",
+                    u."fullName",
+                    u."profilePicture",
+
+
                     (
                       SELECT COUNT(*)
                       FROM cte c1
@@ -74,14 +90,17 @@ exports.getAllTopLevelComments = async (req, res) => {
                       AND c1."id" <> cte."id"
                     ) AS "descendantCount"
                   FROM cte
-                  WHERE "level" = 0 
+                  JOIN users u ON cte."userId" = u."id"
+
+                  WHERE cte."level" = 0 
+                   ORDER BY cte."createdAt" DESC
                   LIMIT :limit OFFSET :offset;
 
                   `,
           {
         replacements: {
           postId,
-          limit,
+          limit:limit+1,
           offset,
         },
         type: QueryTypes.SELECT,
@@ -92,7 +111,12 @@ exports.getAllTopLevelComments = async (req, res) => {
       return res.status(404).json({ message: 'No comments found' });
     }
 
-    return res.status(200).json(result);
+    const hasMore = result.length > limit;
+    const comments = hasMore ? result.slice(0, -1) : result;
+
+
+
+    return res.status(200).json({comments:comments,hasMore:hasMore});
   } catch (error) {
     console.error('Error fetching comments:', error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -100,16 +124,18 @@ exports.getAllTopLevelComments = async (req, res) => {
 };
 
 
-exports.getAllParentsComments = async(req,res)=>{
+exports.getAllParentsComments = async (req, res) => {
   const childCommentId = req.params.childCommentId;
   const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
   const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+
   try {
     const result = await sequelize.query(
       `
       WITH RECURSIVE cte AS (
         SELECT
           c."id",
+          c."userId",
           c."text",
           c."isModified",
           c."createdAt",
@@ -118,12 +144,13 @@ exports.getAllParentsComments = async(req,res)=>{
           0 AS "level",
           ARRAY[c."id"] AS "path"
         FROM comments c
-        WHERE  c."id" = :childCommentId
+        WHERE c."id" = :childCommentId
 
         UNION ALL
 
         SELECT
           c."id",
+          c."userId",
           c."text",
           c."isModified",
           c."createdAt",
@@ -135,13 +162,15 @@ exports.getAllParentsComments = async(req,res)=>{
         JOIN cte ON c."id" = cte."parentId"
       )
 
-
       SELECT
-        id,
-        text,
-        "isModified",
-        "createdAt",
-        "like",
+        cte.id,
+        cte.text,
+        cte."isModified",
+        cte."createdAt",
+        cte."like",
+        u."username",
+        u."fullName",
+        u."profilePicture",
         (
           SELECT COUNT(*)
           FROM cte c1
@@ -149,45 +178,50 @@ exports.getAllParentsComments = async(req,res)=>{
           AND c1."id" <> cte."id"
         ) AS "ascendantCount"
       FROM cte
-      WHERE "level" > 0 
-      ORDER BY level DESC
-      LIMIT :limit OFFSET :offset;
+      JOIN users u ON cte."userId" = u."id"
+      WHERE cte."level" > 0
+      ORDER BY cte."level",cte."createdAt" DESC
 
+      LIMIT :limit OFFSET :offset;
       `,
       {
-      replacements: {
-      childCommentId,
-      limit,
-      offset,
-      },
-      type: QueryTypes.SELECT,
+        replacements: {
+          childCommentId,
+          limit: limit + 1, // Fetch one more to determine if there are more comments
+          offset,
+        },
+        type: QueryTypes.SELECT,
       }
     );
 
-if (result.length === 0) {
-return res.status(404).json({ message: 'No comments found' });
-}
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'No comments found' });
+    }
 
-return res.status(200).json(result);
+    const hasMore = result.length > limit;
+    const comments = hasMore ? result.slice(0, -1) : result;
 
+    return res.status(200).json({ comments, hasMore });
   } catch (error) {
-    return res.status(500).json({ error: error.toString() });
-
+    console.error('Error fetching comments:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
+};
 
-}
 
 
-exports.getAllChildrenComments = async(req,res)=>{
+exports.getAllChildrenComments = async (req, res) => {
   const parentCommentId = req.params.parentCommentId;
   const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
   const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+
   try {
     const result = await sequelize.query(
       `
       WITH RECURSIVE cte AS (
         SELECT
           c."id",
+          c."userId",
           c."text",
           c."isModified",
           c."createdAt",
@@ -196,12 +230,13 @@ exports.getAllChildrenComments = async(req,res)=>{
           0 AS "level",
           ARRAY[c."id"] AS "path"
         FROM comments c
-        WHERE  c."parentId" = :parentCommentId
+        WHERE c."parentId" = :parentCommentId
 
         UNION ALL
 
         SELECT
           c."id",
+          c."userId",
           c."text",
           c."isModified",
           c."createdAt",
@@ -213,13 +248,15 @@ exports.getAllChildrenComments = async(req,res)=>{
         JOIN cte ON c."parentId" = cte."id"
       )
 
-
       SELECT
-        id,
-        text,
-        "isModified",
-        "createdAt",
-        "like",
+        cte.id,
+        cte.text,
+        cte."isModified",
+        cte."createdAt",
+        cte."like",
+        u."username",
+        u."fullName",
+        u."profilePicture",
         (
           SELECT COUNT(*)
           FROM cte c1
@@ -227,31 +264,37 @@ exports.getAllChildrenComments = async(req,res)=>{
           AND c1."id" <> cte."id"
         ) AS "descendantCount"
       FROM cte
-      WHERE "level" = 0 
-      LIMIT :limit OFFSET :offset;
+      JOIN users u ON cte."userId" = u."id"
+      WHERE cte."level" = 0
 
+      ORDER BY cte."createdAt" DESC
+
+      LIMIT :limit OFFSET :offset;
       `,
       {
-      replacements: {
-      parentCommentId,
-      limit,
-      offset,
-      },
-      type: QueryTypes.SELECT,
+        replacements: {
+          parentCommentId,
+          limit: limit + 1, // Fetch one more to check if there are more comments
+          offset,
+        },
+        type: QueryTypes.SELECT,
       }
     );
 
-if (result.length === 0) {
-return res.status(404).json({ message: 'No comments found' });
-}
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'No comments found' });
+    }
 
-return res.status(200).json(result);
+    const hasMore = result.length > limit;
+    const comments = hasMore ? result.slice(0, -1) : result;
 
+
+    return res.status(200).json({ comments, hasMore });
   } catch (error) {
-    return res.status(500).json({ error: error.toString() });
-
+    console.error('Error fetching comments:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
 
 
 // Get a single comment by ID
@@ -371,6 +414,14 @@ exports.voteComment = async (req, res) => {
           throw new Error(notificationResult.error);
         } 
 
+        
+        const userLike = await UserLike.create({
+          ressourceType: 'comment', 
+          ressourceId: comment.id,        
+          userId: userId            
+        },{ transaction: t});
+
+
         return result
       
       });
@@ -381,5 +432,56 @@ exports.voteComment = async (req, res) => {
       // Log the error and respond with a 500 status code
       console.error(error);
       return res.status(500).json({ error: 'An error occurred while processing your request' });
+  }
+};
+
+
+exports.unVoteComment = async (req, res) => {
+  const commentId = req.params.id;
+  const userId = req.user.id;
+
+  // Check if commentId and userId are provided
+  if (!commentId || !userId) {
+    return res.status(400).json({ error: 'Invalid request parameters' });
+  }
+
+  try {
+    // Use a transaction to ensure all database operations are atomic
+    const result = await sequelize.transaction(async (t) => {
+      // Find the comment based on the provided ID
+      const comment = await Comment.findByPk(commentId, { transaction: t });
+
+      // If the comment is not found, throw an error
+      if (!comment) {
+        throw new Error('Comment not found');
+      }
+
+      // Decrement the votes number of the comment
+      const updatedComment = await comment.decrement('like', { transaction: t });
+
+
+
+
+      await UserLike.destroy({
+        where: {
+            ressourceId: commentId
+        },
+        transaction: t
+    });
+    
+
+
+      // Optionally, handle notification logic if required
+      // For example, if you need to handle unliking notifications, you can do so here.
+
+      return updatedComment;
+    });
+
+    // Respond with the updated votes number
+    return res.status(200).json({ likeNumber: result.like });
+  } catch (error) {
+    // Log the error and respond with a 500 status code
+    console.error(error);
+    return res.status(500).json({ error: 'An error occurred while processing your request' });
   }
 };

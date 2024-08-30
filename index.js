@@ -3,6 +3,7 @@ const  db  = require("./db/models/index");
 const authRoutes = require('./src/routes/authRoutes');
 const postRoutes = require('./src/routes/postRoutes');
 const tagRoutes = require('./src/routes/tagRoutes');
+const userLikesRoutes = require('./src/routes/userLikeRoutes');
 const commentRoutes = require('./src/routes/commentRoutes');
 const moderationRoutes = require('./src/routes/moderationRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
@@ -78,6 +79,9 @@ app.use(BASE_ENDPOINT, commentRoutes);
 app.use(BASE_ENDPOINT, moderationRoutes);
 app.use(BASE_ENDPOINT, notificationRoutes);
 app.use(BASE_ENDPOINT, userRoutes);
+app.use(BASE_ENDPOINT, userLikesRoutes);
+
+
 
 
 // ////////////////////////////////////////////////////BACKGROUND TASK//////////////////////////////////////////////////////

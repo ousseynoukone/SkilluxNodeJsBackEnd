@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getOneComment, addComment, updateComment, deleteComment, getAllChildrenComments, getAllTopLevelComments,getAllParentsComments,voteComment } = require("../controllers/comment/commentController");
+const { getOneComment, addComment, updateComment, deleteComment, getAllChildrenComments, getAllTopLevelComments,getAllParentsComments,voteComment,unVoteComment } = require("../controllers/comment/commentController");
 const authenticateToken = require("../controllers/auth/middleware/authMiddleWare");
 const { commentAddingValidator, commentUpdateValidator } = require('../controllers/validators/commentValidators');
 
@@ -15,6 +15,7 @@ router.put("/basic/comments/:id", authenticateToken, commentUpdateValidator, upd
 router.delete("/basic/comments/:id", authenticateToken, deleteComment);
 
 router.post("/basic/comments/vote/:id", authenticateToken, voteComment);
+router.post("/basic/comments/unvote/:id", authenticateToken, unVoteComment);
 
 
 
