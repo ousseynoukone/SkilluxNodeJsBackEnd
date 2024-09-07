@@ -250,6 +250,7 @@ exports.getAllChildrenComments = async (req, res) => {
 
       SELECT
         cte.id,
+        cte."parentId",
         cte.text,
         cte."isModified",
         cte."createdAt",
