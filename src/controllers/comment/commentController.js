@@ -3,205 +3,62 @@ const {Comment} =  db;
 const {Notification} = db;
 const {User} = db;
 const {UserLike} = db;
-const { Sequelize, QueryTypes } = require('sequelize');
+const { Sequelize, QueryTypes, where } = require('sequelize');
 const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
 const {saveNotification} = require("../heper");
 const NotificationType = require("../../models/dtos/notificationEnum");
 
-// Get all comments NOT USED FOR NOW
-// exports.getAllComments = async (req, res) => {
-//     const commentId=req.params.postId
-//     if(!postId){
-//         return res.status(400).json({ error: "Please provide the post id" });
-//     }
-//     try {
-//         const comments = await Comment.findAll({where:{postId:postId}});
-//         nestedComments = buildCommentNodeTree(comments)
-//         return res.status(200).json(nestedComments);
-//     } catch (error) {
-//         return res.status(500).json({ error: error.toString() });
-//     }
-// };
-
 
 exports.getAllTopLevelComments = async (req, res) => {
-
   try {
     const postId = req.params.postId;
+    const userId = req.user.id;
     const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
     const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+
+    const result = await Comment.findAndCountAll({
+      where: {
+        postId: postId,
+        parentId: null,
+      },
+      include: [
+        {
+          model: User,
+          as: 'user', // Alias for the user who made the comment
+          attributes: ['id', 'fullName', 'username', 'profilePicture'],
+        },
+        {
+          model: Comment,
+          as: 'childComments', // Alias for child comments
+          attributes: ['id'],
+          separate: true, // Separate the count of child comments
+        },
+      ],
+      limit: limit + 1, // Fetch one extra item to determine if there's more
+      offset: offset,
+      order: [
+        [sequelize.literal(`CASE WHEN "user"."id" = ${userId} THEN 1 ELSE 0 END`), 'DESC'], // Order by user priority
+        ['createdAt', 'DESC'], // Then by creation date
+      ],
+    });
+
+    const comments = result.rows.map(comment => {
+      const plainComment = comment.toJSON();
+      const childCommentsCount = plainComment.childComments ? plainComment.childComments.length : 0;
+      
+      // Remove the childComments array and add the count
+      delete plainComment.childComments;
+      plainComment.descendantCount = childCommentsCount;
+
+      return plainComment;
+    });
     
 
-    const result = await sequelize.query(
-                `
-                  WITH RECURSIVE cte AS (
-                    SELECT
-                      c."id",
-                      c."text",
-                      c."isModified",
-                      c."createdAt",
-                      c."like",
-                      c."parentId",
-                      c."userId",
-                      c."postId",
+    const hasMore = result.count > limit;
+    const paginatedComments = hasMore ? comments.slice(0, -1) : comments;
 
-                      0 AS "level",
-                      ARRAY[c."id"] AS "path"
-                    FROM comments c
-                    WHERE c."postId" = :postId AND c."parentId" IS NULL
-
-                    UNION ALL
-
-                    SELECT
-                      c."id",
-                      c."text",
-                      c."isModified",
-                      c."createdAt",
-                      c."like",
-                      c."parentId",
-                      c."userId",
-                      c."postId",
-
-                      cte."level" + 1 AS "level",
-                      cte."path" || ARRAY[c."id"] AS "path"
-                    FROM comments c
-                    JOIN cte ON c."parentId" = cte."id"
-                  )
-
-
-                  SELECT
-                    cte.id,
-                    cte.text,
-                    cte."isModified",
-                    cte."createdAt",
-                    cte."like",
-                    cte."userId",
-                    cte."postId",
-                    u."username",
-                    u."fullName",
-                    u."profilePicture",
-
-
-                    (
-                      SELECT COUNT(*)
-                      FROM cte c1
-                      WHERE c1."path" @> ARRAY[cte."id"]
-                      AND c1."id" <> cte."id"
-                    ) AS "descendantCount"
-                  FROM cte
-                  JOIN users u ON cte."userId" = u."id"
-
-                  WHERE cte."level" = 0 
-                   ORDER BY cte."createdAt" DESC
-                  LIMIT :limit OFFSET :offset;
-
-                  `,
-          {
-        replacements: {
-          postId,
-          limit:limit+1,
-          offset,
-        },
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'No comments found' });
-    }
-
-    const hasMore = result.length > limit;
-    const comments = hasMore ? result.slice(0, -1) : result;
-
-
-
-    return res.status(200).json({comments:comments,hasMore:hasMore});
-  } catch (error) {
-    console.error('Error fetching comments:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-
-exports.getAllParentsComments = async (req, res) => {
-  const childCommentId = req.params.childCommentId;
-  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
-  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
-
-  try {
-    const result = await sequelize.query(
-      `
-      WITH RECURSIVE cte AS (
-        SELECT
-          c."id",
-          c."userId",
-          c."text",
-          c."isModified",
-          c."createdAt",
-          c."like",
-          c."parentId",
-          0 AS "level",
-          ARRAY[c."id"] AS "path"
-        FROM comments c
-        WHERE c."id" = :childCommentId
-
-        UNION ALL
-
-        SELECT
-          c."id",
-          c."userId",
-          c."text",
-          c."isModified",
-          c."createdAt",
-          c."like",
-          c."parentId",
-          cte."level" + 1 AS "level",
-          cte."path" || ARRAY[c."id"] AS "path"
-        FROM comments c
-        JOIN cte ON c."id" = cte."parentId"
-      )
-
-      SELECT
-        cte.id,
-        cte.text,
-        cte."isModified",
-        cte."createdAt",
-        cte."like",
-        u."username",
-        u."fullName",
-        u."profilePicture",
-        (
-          SELECT COUNT(*)
-          FROM cte c1
-          WHERE c1."path" @> ARRAY[cte."id"]
-          AND c1."id" <> cte."id"
-        ) AS "ascendantCount"
-      FROM cte
-      JOIN users u ON cte."userId" = u."id"
-      WHERE cte."level" > 0
-      ORDER BY cte."level",cte."createdAt" DESC
-
-      LIMIT :limit OFFSET :offset;
-      `,
-      {
-        replacements: {
-          childCommentId,
-          limit: limit + 1, // Fetch one more to determine if there are more comments
-          offset,
-        },
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'No comments found' });
-    }
-
-    const hasMore = result.length > limit;
-    const comments = hasMore ? result.slice(0, -1) : result;
-
-    return res.status(200).json({ comments, hasMore });
+    return res.status(200).json({ comments: paginatedComments, hasMore });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -210,91 +67,46 @@ exports.getAllParentsComments = async (req, res) => {
 
 
 
-exports.getAllChildrenComments = async (req, res) => {
-  const parentCommentId = req.params.parentCommentId;
-  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
-  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
 
-  try {
-    const result = await sequelize.query(
-      `
-      WITH RECURSIVE cte AS (
-        SELECT
-          c."id",
-          c."userId",
-          c."text",
-          c."isModified",
-          c."createdAt",
-          c."like",
-          c."parentId",
-          0 AS "level",
-          ARRAY[c."id"] AS "path"
-        FROM comments c
-        WHERE c."parentId" = :parentCommentId
+exports.getAllChildrenComments = async (req, res) => {  
+  const parentCommentId = req.params.parentCommentId;  
+  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10  
+  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0  
 
-        UNION ALL
+  try {  
+    const result = await Comment.findAndCountAll({  
+      where: {  
+        parentId: parentCommentId,  
+      },  
+      include: [  
+        {  
+          model: User,  
+          as: 'user', // Alias for the user who made the comment  
+          attributes: ['id', 'fullName', 'username','profilePicture'],   
+        },  
+        {  
+          model: User,  
+          as: 'target', // Alias for the target user of the comment  
+          attributes: ['id', 'fullName', 'username'],   
+        },  
+      ],  
+      limit: limit,  
+      offset: offset,  
+    });  
 
-        SELECT
-          c."id",
-          c."userId",
-          c."text",
-          c."isModified",
-          c."createdAt",
-          c."like",
-          c."parentId",
-          cte."level" + 1 AS "level",
-          cte."path" || ARRAY[c."id"] AS "path"
-        FROM comments c
-        JOIN cte ON c."parentId" = cte."id"
-      )
+    if (result.rows.length === 0) {  
+      return res.status(404).json({ message: 'No comments found' });  
+    }  
 
-      SELECT
-        cte.id,
-        cte."parentId",
-        cte.text,
-        cte."isModified",
-        cte."createdAt",
-        cte."like",
-        u."username",
-        u."fullName",
-        u."profilePicture",
-        (
-          SELECT COUNT(*)
-          FROM cte c1
-          WHERE c1."path" @> ARRAY[cte."id"]
-          AND c1."id" <> cte."id"
-        ) AS "descendantCount"
-      FROM cte
-      JOIN users u ON cte."userId" = u."id"
-      WHERE cte."level" = 0
+    const hasMore = result.count > offset + limit; // Check if there are more comments  
+    const comments = result.rows;  
+    var c = comments[0]
 
-      ORDER BY cte."createdAt" DESC
-
-      LIMIT :limit OFFSET :offset;
-      `,
-      {
-        replacements: {
-          parentCommentId,
-          limit: limit + 1, // Fetch one more to check if there are more comments
-          offset,
-        },
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'No comments found' });
-    }
-
-    const hasMore = result.length > limit;
-    const comments = hasMore ? result.slice(0, -1) : result;
-
-
-    return res.status(200).json({ comments, hasMore });
-  } catch (error) {
-    console.error('Error fetching comments:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
+    return res.status(200).json({ comments, hasMore });  
+  } catch (error) {  
+    console.error('Error fetching comments:', error);  
+    return res.status(500).json({ message: 'Internal server error' });  
+  }  
 };
 
 
@@ -318,10 +130,16 @@ exports.addComment = async (req, res) => {
     try {
         // Connected User id
         const connectedUserId = req.user.id;
+        // Targed User (if ever)
+        const targetUserId = req.body.targedId ?? null;
+
         // Use a transaction to ensure all database operations are atomic
         const result = await sequelize.transaction(async (t) => { 
+
         // Find the user by their ID
         const user = await User.findByPk(connectedUserId,{transaction:t});
+
+        const targetUser = await User.findByPk(targetUserId,{transaction:t});
 
         // If user does not exist, return 404 error
         if (!user) {
@@ -329,9 +147,15 @@ exports.addComment = async (req, res) => {
         }
 
         req.body.userId  = user.id
+
+        if(targetUser){
+          req.body.targedId = targetUserId;
+        }
+
         const comment = await Comment.create(req.body,{transaction:t});
 
         // Notification
+        // Send notification to the post's owner
         const fromUser = connectedUserId
         const post = await comment.getPost({transaction:t})
         const toUser = post.userId
@@ -340,6 +164,14 @@ exports.addComment = async (req, res) => {
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
+    
+        //  send notification to the target
+        if(targetUser){
+          var notificationResult = await saveNotification(comment.id,targetUserId,fromUser,NotificationType.COMMENT,t);
+          if (!notificationResult.success) {
+            throw new Error(notificationResult.error);
+          }    
+         }
 
         return comment
 
