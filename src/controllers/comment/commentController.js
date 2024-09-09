@@ -90,7 +90,7 @@ exports.getAllChildrenComments = async (req, res) => {
           attributes: ['id', 'fullName', 'username'],   
         },  
       ],  
-      limit: limit,  
+      limit: limit+1,  
       offset: offset,  
     });  
 
@@ -98,11 +98,11 @@ exports.getAllChildrenComments = async (req, res) => {
       return res.status(404).json({ message: 'No comments found' });  
     }  
 
-    const hasMore = result.count > offset + limit; // Check if there are more comments  
+    const hasMore = result.count > limit; // Check if there are more comments  
     const comments = result.rows;  
-    var c = comments[0]
+    const paginatedComments = hasMore ? comments.slice(0, -1) : comments;
 
-    return res.status(200).json({ comments, hasMore });  
+    return res.status(200).json({ comments:paginatedComments, hasMore });  
   } catch (error) {  
     console.error('Error fetching comments:', error);  
     return res.status(500).json({ message: 'Internal server error' });  
