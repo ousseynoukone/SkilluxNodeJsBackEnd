@@ -68,7 +68,7 @@ exports.getAllTopLevelComments = async (req, res) => {
                     "createdAt",
                     "like",
                     (
-                      SELECT COUNT(*)
+                      SELECT COUNT(*)::int  
                       FROM cte c1
                       WHERE c1."path" @> ARRAY[cte."id"]
                       AND c1."id" <> cte."id"
@@ -221,7 +221,7 @@ exports.getAllChildrenComments = async(req,res)=>{
         "createdAt",
         "like",
         (
-          SELECT COUNT(*)
+          SELECT COUNT(*)::int  
           FROM cte c1
           WHERE c1."path" @> ARRAY[cte."id"]
           AND c1."id" <> cte."id"

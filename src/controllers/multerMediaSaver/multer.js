@@ -45,11 +45,9 @@ class MulterHelper {
           dest = path.join(basePath, 'videos');
         } else if(file.fieldname === 'profilePicture') {
           dest = path.join(basePath, 'images', 'profilePictures');
-        }
-        else {
+        } else {
           dest = path.join(basePath, 'images', 'contents');
         }
-
 
         // Create the directory if it doesn't exist
         fs.mkdir(dest, { recursive: true }, (err) => {
@@ -64,7 +62,6 @@ class MulterHelper {
       }
     });
 
-
     return multer({
       storage: storage,
       limits: {
@@ -72,26 +69,21 @@ class MulterHelper {
       },
       fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image')) {
-          if (!file.originalname.match(/\.(png|jpg|jpeg)$/)) {
-            const error = new Error(this.getErrorMessage('image', req.user.lang));
-            return cb(error, false);
+          if (!file.originalname.match(/\.(png|jpg|jpeg|PNG|JPG|JPEG)$/)) {
+            return cb(new multer.MulterError('LIMIT_FILE_TYPES', this.getErrorMessage('image', req.user.lang)));
           }
           if (file.size > 5000000) { // 5MB limit for images
-            const error = new Error(this.getErrorMessage('imageSize', req.user.lang));
-            return cb(error, false);
+            return cb(new multer.MulterError('LIMIT_FILE_SIZE', this.getErrorMessage('imageSize', req.user.lang)));
           }
         } else if (file.mimetype.startsWith('video')) {
           if (!file.originalname.match(/\.(mp4|MPEG-4)$/)) {
-            const error = new Error(this.getErrorMessage('video', req.user.lang));
-            return cb(error, false);
+            return cb(new multer.MulterError('LIMIT_FILE_TYPES', this.getErrorMessage('video', req.user.lang)));
           }
           if (file.size > 50000000) { // 50MB limit for videos
-            const error = new Error(this.getErrorMessage('videoSize', req.user.lang));
-            return cb(error, false);
+            return cb(new multer.MulterError('LIMIT_FILE_SIZE', this.getErrorMessage('videoSize', req.user.lang)));
           }
         } else {
-          const error = new Error(this.getErrorMessage('unsupported', req.user.lang));
-          return cb(error, false);
+          return cb(new multer.MulterError('LIMIT_UNEXPECTED_FILE', this.getErrorMessage('unsupported', req.user.lang)));
         }
         cb(null, true);
       }
