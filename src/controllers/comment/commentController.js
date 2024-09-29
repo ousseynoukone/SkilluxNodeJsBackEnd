@@ -98,8 +98,8 @@ exports.getAllChildrenComments = async (req, res) => {
       return res.status(404).json({ message: 'No comments found' });  
     }  
 
-    const hasMore = result.count > limit; // Check if there are more comments  
     const comments = result.rows;  
+    const hasMore = comments.length > limit; // Check if there are more comments  
     const paginatedComments = hasMore ? comments.slice(0, -1) : comments;
 
     return res.status(200).json({ comments:paginatedComments, hasMore });  
