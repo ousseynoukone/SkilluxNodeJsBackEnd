@@ -21,11 +21,8 @@ module.exports = (sequelize, DataTypes) => {
       // Many-to-One: Post BELONGS TO User
       Post.belongsTo(models.User, {
         foreignKey: {
-          foreignKey: {
-            field:'userId',
-            name:'userId'
-
-          },
+          field:'userId',
+          name:'userId',
           onDelete: 'CASCADE',
           onUpdate: 'CASCADE',
         },

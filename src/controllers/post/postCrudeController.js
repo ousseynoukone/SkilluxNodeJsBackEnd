@@ -45,7 +45,8 @@ exports.getRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts
     const preferredPostsQuery = {
       include: [
-        { model: Comment, attributes: ['id'] }
+        { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
       ],
       limit: limit + 1, // Fetch one extra record to determine if there's a next page
       where: {
@@ -137,6 +138,8 @@ exports.getNotRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts not matching user's preferred tags
     const noFollowedTagsPostQuery = {
       include: [
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] },
+
         { model: Comment, attributes: ['id'] },
       ],
       limit: limit+1,
@@ -216,6 +219,8 @@ exports.getFollowedUserPost = async (req, res) => {
     const followedUserPostsQuery = {
       include: [
         { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+
       ],
       limit: limit+1,
       where: {
