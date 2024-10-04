@@ -152,9 +152,9 @@ exports.unvotePost = async (req, res) => {
 
         // Respond with the updated votes number
         return res.status(200).json({ votesNumber: result });
-    } catch (error) {
-        // Log the error and respond with a 500 status code
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred while processing your request' });
+    } catch (error) {  
+        // Log the error and respond with a 500 status code  
+        console.error(error);  
+        return res.status(500).json({ error: `An error occurred while processing your request: ${error.message}` });  
     }
 };
