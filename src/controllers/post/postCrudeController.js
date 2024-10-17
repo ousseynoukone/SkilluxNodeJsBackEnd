@@ -301,6 +301,7 @@ exports.searchPostByTags = async (req, res) => {
     }
 
     const foundPosts = await Post.findAll({
+      
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: limit + 1 // Fetch one extra to determine if there are more results

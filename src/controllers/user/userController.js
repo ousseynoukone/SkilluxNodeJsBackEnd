@@ -141,6 +141,8 @@ exports.getUserPosts = async (req, res) => {
     const getPostQuery = {
       include: [
         { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+
       ],
       limit: limit+1,
       where: {
