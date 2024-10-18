@@ -56,8 +56,13 @@ exports.getUserNotifications = async (req, res) => {
     }));
 
 
+
+
+
     // Group notifications
     let groupedNotifications = groupNotifications(notificationsWithResources, userLang);
+
+
 
     // Apply limit after grouping
     groupedNotifications = groupedNotifications.slice(0, limit + 1);
@@ -97,7 +102,7 @@ function groupNotifications(notifications, userLang = 'en') {
   for (let notif of notifications) {
     // Create a date key based on the date (rounded to the day)
     const date = new Date(notif.createdAt);
-    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}_${date.getDay().toString().padStart(2, '0')}`;
+    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
         
     // Determine the grouping key based on notification type
     let typeKey;
@@ -130,7 +135,7 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: notif.type == 'comment' ? {id: notif.ressource.postId} : notif.ressource,
+        ressource: notif.type == 'comment' ? {id: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
         createdAt: notif.createdAt,
         users: [notif.fromUser],
         resources: [notif.ressourceId]
@@ -159,6 +164,7 @@ function groupNotifications(notifications, userLang = 'en') {
 }
 
 function formatNotificationMessage(group, userLang) {
+  console.log(group)
   const fullName = group.users.slice(0, 3).map(u => u.fullName);
   const othersCount = Math.max(0, group.count - 3);
   const translatedMessage = notificationMessage[userLang];

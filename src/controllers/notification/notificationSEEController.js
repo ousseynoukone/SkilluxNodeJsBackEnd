@@ -70,8 +70,7 @@ exports.sendNotification = async (req, res) => {
     'Connection': 'keep-alive'
   });
 
-  // Send an initial message
-  res.write('data: Connected to notification stream\n\n');
+
 
   // Add this client to the map of connected clients
   clients.set(userId, res);
