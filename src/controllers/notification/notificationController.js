@@ -143,6 +143,7 @@ function groupNotifications(notifications, userLang = 'en') {
     } else {
       grouped[key].count++;
       grouped[key].users.push(notif.fromUser);
+
       if (!grouped[key].resources.includes(notif.ressourceId)) {
         grouped[key].resources.push(notif.ressourceId);
       }
@@ -151,9 +152,10 @@ function groupNotifications(notifications, userLang = 'en') {
         grouped[key].createdAt = notif.createdAt;
       }
     }
-  }
 
+  }
   return Object.values(grouped).map(group => ({
+    
     ressource: group.ressource,
     type: group.type,
     notifCreatedAt: group.createdAt,
@@ -164,7 +166,6 @@ function groupNotifications(notifications, userLang = 'en') {
 }
 
 function formatNotificationMessage(group, userLang) {
-  console.log(group)
   const fullName = group.users.slice(0, 3).map(u => u.fullName);
   const othersCount = Math.max(0, group.count - 3);
   const translatedMessage = notificationMessage[userLang];
