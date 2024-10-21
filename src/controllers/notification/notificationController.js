@@ -2,6 +2,8 @@ const { Op } = require("sequelize");
 const db = require("../../../db/models/index");
 const { Notification, User, Comment, Post, sequelize } = db;
 const notificationMessage = require("./helper");
+const { sendNotificationToUser,sendPostNotificationToUser} = require("./notificationSEEController");
+
 
 exports.getUserNotifications = async (req, res) => {
   const t = await sequelize.transaction();
@@ -82,6 +84,7 @@ exports.getUserNotifications = async (req, res) => {
         }
       );
     }
+    await sendNotificationToUser(userId);
 
     // Determine the next cursor
     const nextCursor = hasMore ? rawNotifications[rawNotifications.length - 1].createdAt : null;

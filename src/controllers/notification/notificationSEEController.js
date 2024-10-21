@@ -1,7 +1,6 @@
 const db = require("../../../db/models/index");
 const { Notification, User, Post, Comment } = db;
 const { Op } = require("sequelize");
-const { groupNotifications } = require("./notificationController");
 
 // Store connected clients
 const clients = new Map();

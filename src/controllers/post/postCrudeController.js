@@ -368,7 +368,7 @@ exports.addPost = async (req, res) => {
         post.headerImage = getMediaLink(coverImage)
       }
       post.content = await insertMediasIntoDocument(post.content,paths);
-      var response = Post.create(post)
+      var response = await Post.create(post)
 
             // Get the IDs of the user's followers
       const followers = await user.getFollowers({ 
@@ -377,9 +377,10 @@ exports.addPost = async (req, res) => {
       });
       const followerIds = followers.map(follower => follower.id);
 
+
       // Send notifications to followers
       if (followerIds.length > 0) {
-        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
+        const notificationResult = await saveBulkNotification(response.id, followerIds, user.id,NotificationType.POST, t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
