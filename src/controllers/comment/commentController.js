@@ -241,11 +241,16 @@ exports.voteComment = async (req, res) => {
 
           // Increment the votes number of the comment
          var result = await comment.increment('like', { transaction: t});
-         var notificationResult = await saveNotification(comment.id,comment.userId,user.id,NotificationType.LIKE,t);
+         
+          // If the connected user like it's own comment , useless to send notification
+         if(comment.userId != userId){
+          var notificationResult = await saveNotification(comment.id,comment.userId,user.id,NotificationType.LIKE,t);
+          if (!notificationResult.success) {
+            throw new Error(notificationResult.error);
+          } 
+         }
 
-         if (!notificationResult.success) {
-          throw new Error(notificationResult.error);
-        } 
+
 
         
         const userLike = await UserLike.create({

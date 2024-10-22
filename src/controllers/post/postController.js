@@ -31,11 +31,16 @@ exports.votePost = async (req, res) => {
             // Increment the votes number of the post
             await post.increment('votesNumber', { transaction: t });
 
+         // If the connected user like it's own post , useless to send notification
+         if(post.userId != userId){
             //Send notification to the target
             var notificationResult = await saveNotification(post.id,post.userId,user.id,NotificationType.VOTE,t);
             if (!notificationResult.success) {
               throw new Error(notificationResult.error);
             }
+         }
+
+
 
             // Get tags associated with the post and user
             const postTags = post.tags;

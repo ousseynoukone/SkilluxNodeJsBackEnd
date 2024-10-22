@@ -41,7 +41,7 @@ exports.getUserNotifications = async (req, res) => {
     // Fetch associated resources (posts or comments)
     const notificationsWithResources = await Promise.all(rawNotifications.map(async notification => {
       const notifJSON = notification.toJSON();
-      if (notification.type === "comment") {
+      if (notification.type === "comment" || notification.type === "like") {
         const comment = await Comment.findByPk(notification.ressourceId, { 
           transaction: t,
           include: [{ model: Post, attributes: ['id', 'title'] }]
@@ -138,7 +138,7 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: notif.type == 'comment' ? {id: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
+        ressource: notif.type == 'comment' || notif.type == 'like' ? {id: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
         createdAt: notif.createdAt,
         users: [notif.fromUser],
         resources: [notif.ressourceId]
@@ -169,18 +169,10 @@ function groupNotifications(notifications, userLang = 'en') {
 }
 
 function formatNotificationMessage(group, userLang) {
-  const fullName = group.users.slice(0, 3).map(u => u.fullName);
+  // const fullName = group.users.slice(0, 3).map(u => u.fullName);
   const othersCount = Math.max(0, group.count - 3);
   const translatedMessage = notificationMessage[userLang];
-
   let message = '';
-  if (fullName.length === 1) {
-    message = `${fullName[0]}`;
-  } else if (fullName.length === 2) {
-    message = `${fullName[0]} ${translatedMessage.and} ${fullName[1]}`;
-  } else if (fullName.length === 3) {
-    message = `${fullName[0]}, ${fullName[1]} ${translatedMessage.and} ${fullName[2]}`;
-  }
 
   if (othersCount > 0) {
     message += ` ${translatedMessage.and} ${othersCount} ${translatedMessage.others}`;
@@ -205,7 +197,6 @@ function formatNotificationMessage(group, userLang) {
       message += ` ${translatedMessage.post}`;
       break;
   }
-
   return message;
 }
 

@@ -59,7 +59,7 @@ async function ungroupedNotificationCounter(userId) {
   return count;
 }
 
-exports.sendNotification = async (req, res) => {
+exports.connectToSseNotificationStream = async (req, res) => {
   var userId = req.user.id;
   
   // Set headers for SSE
@@ -79,7 +79,7 @@ exports.sendNotification = async (req, res) => {
   res.write(`data: ${JSON.stringify(initialCount)}\n\n`);
 
   // Remove client when they disconnect
-  req.on('close', () => {
+  req.on("close", function() {
     clients.delete(userId);
-  });
+});
 };
