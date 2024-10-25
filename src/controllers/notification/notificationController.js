@@ -141,14 +141,14 @@ function groupNotifications(notifications, userLang = 'en') {
         ressource: notif.type == 'comment' || notif.type == 'like' ? {id: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
         createdAt: notif.createdAt,
         users: [notif.fromUser],
-        resources: [notif.ressourceId]
+        resourcesIds: [notif.ressourceId]
       };
     } else {
       grouped[key].count++;
       grouped[key].users.push(notif.fromUser);
 
-      if (!grouped[key].resources.includes(notif.ressourceId)) {
-        grouped[key].resources.push(notif.ressourceId);
+      if (!grouped[key].resourcesIds.includes(notif.ressourceId)) {
+        grouped[key].resourcesIds.push(notif.ressourceId);
       }
       // Update createdAt to the most recent notification in the group
       if (new Date(notif.createdAt) > new Date(grouped[key].createdAt)) {
