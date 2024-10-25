@@ -329,11 +329,25 @@ exports.searchPostByTags = async (req, res) => {
 
 exports.getOnePost = async (req, res) => {
     try {
-        const post = await Post.findByPk(req.params.id);
+        const post = await Post.findByPk(req.params.id,{
+          include: [
+            { model: Comment, attributes: ['id'] },
+            { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+    
+          ],
+        });
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
-        return res.status(200).json(post);
+
+        // Transform results to include the number of comments
+        const commentCount = post.Comments.length;
+        const { Comments, ...postData } = post.toJSON();
+        const postsWithNumberOfComments  = { ...postData, commentCount }
+
+
+
+        return res.status(200).json(postsWithNumberOfComments);
     } catch (error) {
         return res.status(500).json({ error: error.toString() });
     }
