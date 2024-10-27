@@ -113,7 +113,16 @@ exports.getAllChildrenComments = async (req, res) => {
 // Get a single comment by ID
 exports.getOneComment = async (req, res) => {
     try {
-        const comment = await Comment.findByPk(req.params.id);
+        const comment = await Comment.findByPk(req.params.id,{
+          include: [  
+            {  
+              model: User,  
+              as: 'user', // Alias for the user who made the comment  
+              attributes: ['id', 'fullName', 'username','profilePicture'],   
+            },  
+    
+          ], 
+        });
         if (!comment) {
             return res.status(404).json({ error: "Comment not found" });
         }

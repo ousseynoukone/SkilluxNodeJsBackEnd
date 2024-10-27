@@ -138,8 +138,8 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: notif.type == 'comment' || notif.type == 'like' ? {id: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
-        createdAt: notif.createdAt,
+        ressource: notif.type == 'comment' || notif.type == 'like' ? {id: notif.ressource.id,postId: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
+        createdAt: notif.createdAt, 
         users: [notif.fromUser],
         resourcesIds: [notif.ressourceId]
       };
