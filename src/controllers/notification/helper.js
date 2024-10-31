@@ -30,7 +30,6 @@ function getResource(notif) {
             text: `${notif.ressource.text}`  
         };  
     } else if(notif.type ==='follow'){
-        console.log(notif)
         return {  
             id: notif.ressourceId,    
         };
