@@ -22,5 +22,21 @@ var notificationMessage = {
         others: 'others'
     }
 };
-
-module.exports = notificationMessage;
+function getResource(notif) {  
+    if (notif.type === 'comment' || notif.type === 'like') {  
+        return {  
+            id: notif.ressource.id,  
+            postId: notif.ressource.postId,  
+            text: `${notif.ressource.text}`  
+        };  
+    } else if(notif.type ==='follow'){
+        console.log(notif)
+        return {  
+            id: notif.ressourceId,    
+        };
+    }
+    else {  
+        return notif.ressource;  
+    }  
+} 
+module.exports = { notificationMessage , getResource};

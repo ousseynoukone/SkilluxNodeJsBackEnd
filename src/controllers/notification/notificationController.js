@@ -1,7 +1,7 @@
 const { Op } = require("sequelize");
 const db = require("../../../db/models/index");
 const { Notification, User, Comment, Post, sequelize } = db;
-const notificationMessage = require("./helper");
+const {notificationMessage , getResource} = require("./helper");
 const { sendNotificationToUser,sendPostNotificationToUser} = require("./notificationSEEController");
 
 
@@ -138,7 +138,7 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: notif.type == 'comment' || notif.type == 'like' ? {id: notif.ressource.id,postId: notif.ressource.postId, text: `${notif.ressource.text}`} : notif.ressource,
+        ressource: getResource(notif),
         createdAt: notif.createdAt, 
         users: [notif.fromUser],
         resourcesIds: [notif.ressourceId]
