@@ -53,6 +53,7 @@ exports.getRecommandedTagsPost = async (req, res) => {
         [Op.and]: [
           { tags: { [Op.overlap]: userPreferedTagsLibelle } },
           { isPublished: true },
+          { userId: { [Op.ne]: userId } },
           cursor ? { createdAt: { [Op.lt]: cursor } } : {}
         ]
       },
@@ -146,6 +147,8 @@ exports.getNotRecommandedTagsPost = async (req, res) => {
       where: {
         [Op.and]: [
           { id: { [Op.notIn]: preferredPostIds } }, // Exclude preferred posts by ID
+          { userId: { [Op.ne]: userId } },
+
           { isPublished: true },
           cursor ? { createdAt: { [Op.lt]: cursor } } : {},
         ],
@@ -291,7 +294,21 @@ exports.searchPostByTags = async (req, res) => {
 
     const whereClause = {
       [Op.and]: [
-        Sequelize.literal(`ARRAY_TO_STRING(tags, ',') ILIKE '%${tag}%'`),
+{
+          [Op.or]: [
+            Sequelize.literal(`ARRAY_TO_STRING(tags, ',') ILIKE '%${tag}%'`),
+
+            { title: 
+             { 
+              [Op.iLike]: `%${tag}%`
+             }  // Case-insensitive search for tag
+    
+             },
+        ]
+},
+
+
+
         { isPublished: true }
       ]
     };
@@ -301,7 +318,9 @@ exports.searchPostByTags = async (req, res) => {
     }
 
     const foundPosts = await Post.findAll({
-      
+      include: [
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+      ],
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: limit + 1 // Fetch one extra to determine if there are more results

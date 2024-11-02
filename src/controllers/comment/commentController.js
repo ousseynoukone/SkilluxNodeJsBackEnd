@@ -169,19 +169,20 @@ exports.addComment = async (req, res) => {
         const post = await comment.getPost({transaction:t})
         const toUser = post.userId
 
+        if(toUser!=fromUser){
         var notificationResult = await saveNotification(comment.id,toUser,fromUser,NotificationType.COMMENT,t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
-    
+      }
         //  send notification to the target
-        if(targetUser){
+        if(targetUser && targetUserId!= fromUser){
           var notificationResult = await saveNotification(comment.id,targetUserId,fromUser,NotificationType.COMMENT,t);
           if (!notificationResult.success) {
             throw new Error(notificationResult.error);
           }    
          }
-
+       
         return comment
 
       })
@@ -211,19 +212,53 @@ exports.updateComment = async (req, res) => {
 
 // Delete a comment
 exports.deleteComment = async (req, res) => {
-    try {
-        const comment = await Comment.findByPk(req.params.id);
-        if (!comment) {
-            return res.status(404).json({ error: "Comment not found" });
-        }
+  try {
+    // Start a transaction
+    await sequelize.transaction(async (t) => {
+      // Find the comment
+      const comment = await Comment.findByPk(req.params.id, { transaction: t });
+      
+      if (!comment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
 
-        await comment.destroy();
-        return res.status(200).json({ success: "Comment deleted!" });
-    } catch (error) {
-        return res.status(500).json({ error: error.toString() });
-    }
+      // Find all related notifications
+      const notifications = await Notification.findAll({
+        where: {
+          ressourceId: comment.id,
+          type: 'comment'
+        },
+        transaction: t  // Use the transaction in the query
+      });
+
+      // Delete all related notifications first
+      if (notifications.length > 0) {
+        await Notification.destroy({
+          where: {
+            ressourceId: comment.id,
+            type: 'comment'
+          },
+          transaction: t  // Include the transaction in the deletion
+        });
+      }
+
+      // Delete the comment
+      await comment.destroy({ transaction: t });
+
+      // Return success message if transaction completes
+      return res.status(200).json({ 
+        success: "Comment and related notifications deleted successfully!",
+        deletedNotificationsCount: notifications.length
+      });
+    });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return res.status(500).json({ 
+      error: "Failed to delete comment and notifications",
+      details: error.toString()
+    });
+  }
 };
-
 
 exports.voteComment = async (req, res) => {
   const commentId = req.params.id;
