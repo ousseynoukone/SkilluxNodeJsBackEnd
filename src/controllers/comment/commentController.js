@@ -140,7 +140,8 @@ exports.addComment = async (req, res) => {
         // Connected User id
         const connectedUserId = req.user.id;
         // Targed User (if ever)
-        const targetUserId = req.body.targedId ?? null;
+        const targetUserId = req.body.targetId ?? null;
+
 
         // Use a transaction to ensure all database operations are atomic
         const result = await sequelize.transaction(async (t) => { 
@@ -169,14 +170,15 @@ exports.addComment = async (req, res) => {
         const post = await comment.getPost({transaction:t})
         const toUser = post.userId
 
-        if(toUser!=fromUser){
+
+        if(toUser!=connectedUserId && targetUserId == null){
         var notificationResult = await saveNotification(comment.id,toUser,fromUser,NotificationType.COMMENT,t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
       }
         //  send notification to the target
-        if(targetUser && targetUserId!= fromUser){
+        if(targetUser && targetUserId != connectedUserId){
           var notificationResult = await saveNotification(comment.id,targetUserId,fromUser,NotificationType.COMMENT,t);
           if (!notificationResult.success) {
             throw new Error(notificationResult.error);

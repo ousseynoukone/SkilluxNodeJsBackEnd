@@ -62,7 +62,7 @@ exports.getUserNotifications = async (req, res) => {
 
 
     // Group notifications
-    let groupedNotifications = groupNotifications(notificationsWithResources, userLang);
+    let groupedNotifications = await groupNotifications(notificationsWithResources, userLang);
 
 
 
@@ -100,7 +100,7 @@ exports.getUserNotifications = async (req, res) => {
   }
 };
 
-function groupNotifications(notifications, userLang = 'en') {
+async function groupNotifications(notifications, userLang = 'en') {
   let grouped = {};
   for (let notif of notifications) {
     // Create a date key based on the date (rounded to the day)
@@ -138,7 +138,7 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: getResource(notif),
+        ressource: await getResource(notif),
         createdAt: notif.createdAt, 
         users: [notif.fromUser],
         resourcesIds: [notif.ressourceId]
@@ -188,7 +188,12 @@ function formatNotificationMessage(group, userLang) {
       break;
 
     case 'comment':
-      message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.comments}` : ` ${translatedMessage.comment}`;
+      // If the comment is a response to another comment
+      if(group.ressource.targetId){
+        message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.commentsAnswer}` : ` ${translatedMessage.commentAnswer}`;
+      }else{
+        message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.comments}` : ` ${translatedMessage.comment}`;
+      }
       break;
     case 'follow':
       message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.follows}` : ` ${translatedMessage.follow}`;
