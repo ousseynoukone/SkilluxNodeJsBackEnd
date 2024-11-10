@@ -6,7 +6,8 @@ const {
   getRecommandedTagsPost, getOnePost, getFollowedUserPost, searchPostByTags
 } = require("../controllers/post/postCrudeController");
 const authenticateToken = require("../controllers/auth/middleware/authMiddleWare");
-const { votePost } = require("../controllers/post/postController");
+const { votePost,unvotePost } = require("../controllers/post/postController");
+
 const { postAddingValidator, postUpdateValidator } = require('../controllers/validators/postValidators');
 
 // GET endpoints
@@ -18,6 +19,7 @@ router.get("/basic/posts/:id", authenticateToken, getOnePost);
 
 // POST endpoints
 router.post("/basic/posts/vote/:id", authenticateToken, votePost);
+router.post("/basic/posts/unvote/:id", authenticateToken, unvotePost);
 
 router.post("/basic/posts", 
   authenticateToken,

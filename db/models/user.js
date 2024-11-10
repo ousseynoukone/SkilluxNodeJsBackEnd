@@ -12,11 +12,22 @@ module.exports = (sequelize, DataTypes) => {
 
       });
 
+      // FOR USER TO GET COMMENT HE HAS MADE
       // One-to-Many: User HAS MANY Comments
       User.hasMany(models.Comment, {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
         foreignKey: 'userId', // Specify the foreign key name in camelCase
+        as:'comment',
+
+      });
+
+      // FOR USER TO GET COMMENT WHICH IN HE IS THE TARGET
+      User.hasMany(models.Comment, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        foreignKey: 'targetId', // Specify the foreign key name in camelCase
+        as:'targetComment',
 
       });
 

@@ -8,12 +8,27 @@ module.exports = (sequelize, DataTypes) => {
       Comment.belongsTo(models.User, {
         foreignKey: {
           allowNull: false, // Ensures a comment cannot exist without a user
-          name:'userId',
-          field: 'userId', // Renamed foreign key field to camelCase
-        },
+          field: 'userId', // / field name in the database
+          name:'userId' // field name in the database
+        },         
+         as:'user', 
+
         onDelete: 'CASCADE', // Deletes comment if associated user is deleted
         onUpdate: 'CASCADE',
       });
+      // A comment belong to a single target
+      Comment.belongsTo(models.User, {
+        foreignKey: {
+          allowNull: true,
+          field: 'targetId', // field name in the database
+          name:'targetId' // field name in the mondel
+
+        },
+        as:'target', 
+
+      });
+
+      
 
       // A comment belongs to a single Post
       Comment.belongsTo(models.Post, {

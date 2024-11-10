@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Post, User, Tag, sequelize } = require("../../../db/models");
+const { Post, User, Tag , sequelize , UserLike} = require("../../../db/models");
 const { getStringThatAreInAAndNotInB, getStringThatAreInAAndInB } = require('./postHelper');
 const {saveNotification} = require('../heper');
 const NotificationType = require('../../models/dtos/notificationEnum');
@@ -31,11 +31,16 @@ exports.votePost = async (req, res) => {
             // Increment the votes number of the post
             await post.increment('votesNumber', { transaction: t });
 
+         // If the connected user like it's own post , useless to send notification
+         if(post.userId != userId){
             //Send notification to the target
             var notificationResult = await saveNotification(post.id,post.userId,user.id,NotificationType.VOTE,t);
             if (!notificationResult.success) {
               throw new Error(notificationResult.error);
             }
+         }
+
+
 
             // Get tags associated with the post and user
             const postTags = post.tags;
@@ -70,6 +75,12 @@ exports.votePost = async (req, res) => {
                 transaction: t
             });
 
+            const userLike = await UserLike.create({
+                ressourceType: 'post', 
+                ressourceId: post.id,        
+                userId: userId            
+              },{ transaction: t});
+
             // Return the updated votes number of the post
             return post.votesNumber;
         });
@@ -80,5 +91,75 @@ exports.votePost = async (req, res) => {
         // Log the error and respond with a 500 status code
         console.error(error);
         return res.status(500).json({ error: 'An error occurred while processing your request' });
+    }
+};
+
+
+
+
+
+
+// This function handles unvoting on a post
+exports.unvotePost = async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.id;
+
+    // Check if postId and userId are provided
+    if (!postId || !userId) {
+        return res.status(400).json({ error: 'Invalid request parameters' });
+    }
+
+    try {
+        // Use a transaction to ensure all database operations are atomic
+        const result = await sequelize.transaction(async (t) => {
+            // Find the post and user based on the provided IDs
+            const [post, user] = await Promise.all([
+                Post.findByPk(postId, { transaction: t }),
+                User.findByPk(userId, { transaction: t })
+            ]);
+
+            // If either post or user is not found, throw an error
+            if (!post || !user) {
+                throw new Error('Post or User not found');
+            }
+
+            // Check if the user has already liked the post
+            const userLike = await UserLike.findOne({
+                where: {
+                    ressourceType: 'post',
+                    ressourceId: post.id,
+                    userId: userId
+                },
+                transaction: t
+            });
+
+            if (!userLike) {
+                throw new Error('User has not liked this post');
+            }
+
+            // Decrement the votes number of the post
+            await post.decrement('votesNumber', { transaction: t });
+
+
+            // Remove the user's like for the post
+            await UserLike.destroy({
+                where: {
+                    ressourceType: 'post',
+                    ressourceId: post.id,
+                    userId: userId
+                },
+                transaction: t
+            });
+
+            // Return the updated votes number of the post
+            return post.votesNumber;
+        });
+
+        // Respond with the updated votes number
+        return res.status(200).json({ votesNumber: result });
+    } catch (error) {  
+        // Log the error and respond with a 500 status code  
+        console.error(error);  
+        return res.status(500).json({ error: `An error occurred while processing your request: ${error.message}` });  
     }
 };

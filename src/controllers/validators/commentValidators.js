@@ -9,6 +9,10 @@ exports.commentAddingValidator = [
     .optional()
     .isInt().withMessage('Parent ID must be an integer'),
 
+  body('targetId')
+    .optional()
+    .isInt().withMessage('Target ID must be an integer'),
+
   body('text')
     .notEmpty().withMessage('Text is required')
     .isLength({ min: 1, max: 5000 }).withMessage('Content must be between 1 and 5000 characters'),

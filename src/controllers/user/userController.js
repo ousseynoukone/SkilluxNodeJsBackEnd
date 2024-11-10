@@ -141,6 +141,8 @@ exports.getUserPosts = async (req, res) => {
     const getPostQuery = {
       include: [
         { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+
       ],
       limit: limit+1,
       where: {
@@ -443,6 +445,7 @@ exports.getUserNbFollowing = async (req, res) => {
 // SEARCH USER BY USERNAME OR FULL NAME
 exports.searchUser = async (req, res) => {
   const username = req.params.username;
+  const userId = req.user.id;
 
     // Parse and validate limit
   const limit = parseInt(req.params.limit, 10) || 10;
@@ -457,15 +460,22 @@ exports.searchUser = async (req, res) => {
   }
   try {
     // Find the user by primary key
-    const users = await User.findAll({
+    let users = await User.findAll({
             
       where: {
         [Op.and]: [
-          {[Op.or]:[{username:{[Op.substring]: username}},{fullName:{[Op.substring]: username}}]},
+          { [Op.or]: [
+            { username: { [Op.iLike]: `%${username}%` } },
+            { fullName: { [Op.iLike]: `%${username}%` } }
+          ] 
+        },          
+          { id: { [Op.ne]: userId } }, // Exclude the current user
+
           cursor ? { createdAt: { [Op.lt]: cursor } } : {},
+          
         ],
       },
-    limit: limit,
+    limit: limit + 1 , // Fetch one extra to determine if there are more results
     order: [['createdAt', 'DESC']],
 
   },
@@ -474,13 +484,20 @@ exports.searchUser = async (req, res) => {
 
     // If user exists
     if (users) {
+
+      const hasMore = users.length > limit;
+      users = hasMore ? users.slice(0, -1) : users;
+
+
       // Determine the next cursor
       const nextCursor =
       users.length > 0
         ? users[users.length - 1].createdAt
         : null;
 
-      return res.status(200).json({ users,nextCursor });
+
+
+      return res.status(200).json({ users,nextCursor,hasMore });
     } else {
       // If users do not exist, send appropriate response
       return res.status(404).json({ error: 'User not found' });

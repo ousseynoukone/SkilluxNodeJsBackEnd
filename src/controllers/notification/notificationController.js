@@ -1,7 +1,9 @@
 const { Op } = require("sequelize");
 const db = require("../../../db/models/index");
 const { Notification, User, Comment, Post, sequelize } = db;
-const notificationMessage = require("./helper");
+const {notificationMessage , getResource} = require("./helper");
+const { sendNotificationToUser,sendPostNotificationToUser} = require("./notificationSEEController");
+
 
 exports.getUserNotifications = async (req, res) => {
   const t = await sequelize.transaction();
@@ -39,7 +41,7 @@ exports.getUserNotifications = async (req, res) => {
     // Fetch associated resources (posts or comments)
     const notificationsWithResources = await Promise.all(rawNotifications.map(async notification => {
       const notifJSON = notification.toJSON();
-      if (notification.type === "comment") {
+      if (notification.type === "comment" || notification.type === "like") {
         const comment = await Comment.findByPk(notification.ressourceId, { 
           transaction: t,
           include: [{ model: Post, attributes: ['id', 'title'] }]
@@ -56,8 +58,13 @@ exports.getUserNotifications = async (req, res) => {
     }));
 
 
+
+
+
     // Group notifications
-    let groupedNotifications = groupNotifications(notificationsWithResources, userLang);
+    let groupedNotifications = await groupNotifications(notificationsWithResources, userLang);
+
+
 
     // Apply limit after grouping
     groupedNotifications = groupedNotifications.slice(0, limit + 1);
@@ -77,6 +84,7 @@ exports.getUserNotifications = async (req, res) => {
         }
       );
     }
+    await sendNotificationToUser(userId);
 
     // Determine the next cursor
     const nextCursor = hasMore ? rawNotifications[rawNotifications.length - 1].createdAt : null;
@@ -92,12 +100,12 @@ exports.getUserNotifications = async (req, res) => {
   }
 };
 
-function groupNotifications(notifications, userLang = 'en') {
+async function groupNotifications(notifications, userLang = 'en') {
   let grouped = {};
   for (let notif of notifications) {
     // Create a date key based on the date (rounded to the day)
     const date = new Date(notif.createdAt);
-    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}_${date.getDay().toString().padStart(2, '0')}`;
+    const dateKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
         
     // Determine the grouping key based on notification type
     let typeKey;
@@ -130,25 +138,27 @@ function groupNotifications(notifications, userLang = 'en') {
       grouped[key] = {
         type: notif.type,
         count: 1,
-        ressource: notif.type == 'comment' ? {id: notif.ressource.postId} : notif.ressource,
-        createdAt: notif.createdAt,
+        ressource: await getResource(notif),
+        createdAt: notif.createdAt, 
         users: [notif.fromUser],
-        resources: [notif.ressourceId]
+        resourcesIds: [notif.ressourceId]
       };
     } else {
       grouped[key].count++;
       grouped[key].users.push(notif.fromUser);
-      if (!grouped[key].resources.includes(notif.ressourceId)) {
-        grouped[key].resources.push(notif.ressourceId);
+
+      if (!grouped[key].resourcesIds.includes(notif.ressourceId)) {
+        grouped[key].resourcesIds.push(notif.ressourceId);
       }
       // Update createdAt to the most recent notification in the group
       if (new Date(notif.createdAt) > new Date(grouped[key].createdAt)) {
         grouped[key].createdAt = notif.createdAt;
       }
     }
-  }
 
+  }
   return Object.values(grouped).map(group => ({
+    
     ressource: group.ressource,
     type: group.type,
     notifCreatedAt: group.createdAt,
@@ -159,18 +169,10 @@ function groupNotifications(notifications, userLang = 'en') {
 }
 
 function formatNotificationMessage(group, userLang) {
-  const fullName = group.users.slice(0, 3).map(u => u.fullName);
+  // const fullName = group.users.slice(0, 3).map(u => u.fullName);
   const othersCount = Math.max(0, group.count - 3);
   const translatedMessage = notificationMessage[userLang];
-
   let message = '';
-  if (fullName.length === 1) {
-    message = `${fullName[0]}`;
-  } else if (fullName.length === 2) {
-    message = `${fullName[0]} ${translatedMessage.and} ${fullName[1]}`;
-  } else if (fullName.length === 3) {
-    message = `${fullName[0]}, ${fullName[1]} ${translatedMessage.and} ${fullName[2]}`;
-  }
 
   if (othersCount > 0) {
     message += ` ${translatedMessage.and} ${othersCount} ${translatedMessage.others}`;
@@ -186,7 +188,12 @@ function formatNotificationMessage(group, userLang) {
       break;
 
     case 'comment':
-      message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.comments}` : ` ${translatedMessage.comment}`;
+      // If the comment is a response to another comment
+      if(group.ressource.targetId){
+        message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.commentsAnswer}` : ` ${translatedMessage.commentAnswer}`;
+      }else{
+        message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.comments}` : ` ${translatedMessage.comment}`;
+      }
       break;
     case 'follow':
       message += group.count > 1 && userLang == 'fr' ? ` ${translatedMessage.follows}` : ` ${translatedMessage.follow}`;
@@ -195,7 +202,6 @@ function formatNotificationMessage(group, userLang) {
       message += ` ${translatedMessage.post}`;
       break;
   }
-
   return message;
 }
 

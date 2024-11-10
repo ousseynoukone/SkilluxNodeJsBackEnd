@@ -2,102 +2,71 @@ const db = require("../../../db/models/index");
 const {Comment} =  db;
 const {Notification} = db;
 const {User} = db;
-const { Sequelize, QueryTypes } = require('sequelize');
+const {UserLike} = db;
+const { Sequelize, QueryTypes, where } = require('sequelize');
 const sequelize = db.sequelize;
 const buildCommentNodeTree = require("./commentHelper");
 const {saveNotification} = require("../heper");
 const NotificationType = require("../../models/dtos/notificationEnum");
 
-// Get all comments NOT USED FOR NOW
-// exports.getAllComments = async (req, res) => {
-//     const commentId=req.params.postId
-//     if(!postId){
-//         return res.status(400).json({ error: "Please provide the post id" });
-//     }
-//     try {
-//         const comments = await Comment.findAll({where:{postId:postId}});
-//         nestedComments = buildCommentNodeTree(comments)
-//         return res.status(200).json(nestedComments);
-//     } catch (error) {
-//         return res.status(500).json({ error: error.toString() });
-//     }
-// };
-
 
 exports.getAllTopLevelComments = async (req, res) => {
   try {
     const postId = req.params.postId;
+    const userId = req.user.id;
     const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
     const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
 
-    const result = await sequelize.query(
-                `
-                  WITH RECURSIVE cte AS (
-                    SELECT
-                      c."id",
-                      c."text",
-                      c."isModified",
-                      c."createdAt",
-                      c."like",
-                      c."parentId",
-                      0 AS "level",
-                      ARRAY[c."id"] AS "path"
-                    FROM comments c
-                    WHERE c."postId" = :postId AND c."parentId" IS NULL
 
-                    UNION ALL
+    const result = await Comment.findAndCountAll({
+      where: {
+        postId: postId,
+        parentId: null,
+      },
+      include: [
+        {
+          model: User,
+          as: 'user', // Alias for the user who made the comment
+          attributes: ['id', 'fullName', 'username', 'profilePicture'],
 
-                    SELECT
-                      c."id",
-                      c."text",
-                      c."isModified",
-                      c."createdAt",
-                      c."like",
-                      c."parentId",
-                      cte."level" + 1 AS "level",
-                      cte."path" || ARRAY[c."id"] AS "path"
-                    FROM comments c
-                    JOIN cte ON c."parentId" = cte."id"
-                  )
-
-
-                  SELECT
-                    id,
-                    text,
-                    "isModified",
-                    "createdAt",
-                    "like",
-                    (
-                      SELECT COUNT(*)::int  
-                      FROM cte c1
-                      WHERE c1."path" @> ARRAY[cte."id"]
-                      AND c1."id" <> cte."id"
-                    ) AS "descendantCount"
-                  FROM cte
-                  WHERE "level" = 0 
-                  LIMIT :limit OFFSET :offset;
-
-                  `,
-          {
-        replacements: {
-          postId,
-          limit,
-          offset,
         },
-        type: QueryTypes.SELECT,
-      }
-    );
+        {
+          model: Comment,
+          as: 'childComments', // Alias for child comments
+          attributes: ['id'],
+          separate: true, // Separate the count of child comments
+        },
+      ],
+      limit: limit + 1, // Fetch one extra item to determine if there's more
+      offset: offset,
+      order: [
+        [sequelize.literal(`CASE WHEN "user"."id" = ${userId} THEN 1 ELSE 0 END`), 'DESC'], // Order by user priority
+        ['createdAt', 'DESC'], // Then by creation date
+      ],
+    });
 
-    if (result.length === 0) {
-      return res.status(404).json({ message: 'No comments found' });
-    }
+    const comments = result.rows.map(comment => {
+      const plainComment = comment.toJSON();
+      const childCommentsCount = plainComment.childComments ? plainComment.childComments.length : 0;
+      
+      // Remove the childComments array and add the count
+      delete plainComment.childComments;
+      plainComment.descendantCount = childCommentsCount;
 
-    return res.status(200).json(result);
+      return plainComment;
+    });
+    
+
+    const hasMore = result.count > limit;
+    const paginatedComments = hasMore ? comments.slice(0, -1) : comments;
+
+    return res.status(200).json({ comments: paginatedComments, hasMore });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 
 exports.getAllParentsComments = async(req,res)=>{
@@ -241,23 +210,62 @@ exports.getAllChildrenComments = async(req,res)=>{
       }
     );
 
-if (result.length === 0) {
-return res.status(404).json({ message: 'No comments found' });
-}
 
-return res.status(200).json(result);
+exports.getAllChildrenComments = async (req, res) => {  
+  const parentCommentId = req.params.parentCommentId;  
+  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10  
+  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0  
 
-  } catch (error) {
-    return res.status(500).json({ error: error.toString() });
+  try {  
+    const result = await Comment.findAndCountAll({  
+      where: {  
+        parentId: parentCommentId,  
+      },  
+      include: [  
+        {  
+          model: User,  
+          as: 'user', // Alias for the user who made the comment  
+          attributes: ['id', 'fullName', 'username','profilePicture'],   
+        },  
+        {  
+          model: User,  
+          as: 'target', // Alias for the target user of the comment  
+          attributes: ['id', 'fullName', 'username'],   
+        },  
+      ],  
+      limit: limit+1,  
+      offset: offset,  
+    });  
 
-  }
-}
+    if (result.rows.length === 0) {  
+      return res.status(404).json({ message: 'No comments found' });  
+    }  
+
+    const comments = result.rows;  
+    const hasMore = comments.length > limit; // Check if there are more comments  
+    const paginatedComments = hasMore ? comments.slice(0, -1) : comments;
+
+    return res.status(200).json({ comments:paginatedComments, hasMore });  
+  } catch (error) {  
+    console.error('Error fetching comments:', error);  
+    return res.status(500).json({ message: 'Internal server error' });  
+  }  
+};
 
 
 // Get a single comment by ID
 exports.getOneComment = async (req, res) => {
     try {
-        const comment = await Comment.findByPk(req.params.id);
+        const comment = await Comment.findByPk(req.params.id,{
+          include: [  
+            {  
+              model: User,  
+              as: 'user', // Alias for the user who made the comment  
+              attributes: ['id', 'fullName', 'username','profilePicture'],   
+            },  
+    
+          ], 
+        });
         if (!comment) {
             return res.status(404).json({ error: "Comment not found" });
         }
@@ -274,10 +282,17 @@ exports.addComment = async (req, res) => {
     try {
         // Connected User id
         const connectedUserId = req.user.id;
+        // Targed User (if ever)
+        const targetUserId = req.body.targetId ?? null;
+
+
         // Use a transaction to ensure all database operations are atomic
         const result = await sequelize.transaction(async (t) => { 
+
         // Find the user by their ID
         const user = await User.findByPk(connectedUserId,{transaction:t});
+
+        const targetUser = await User.findByPk(targetUserId,{transaction:t});
 
         // If user does not exist, return 404 error
         if (!user) {
@@ -285,18 +300,35 @@ exports.addComment = async (req, res) => {
         }
 
         req.body.userId  = user.id
+
+        if(targetUser){
+          req.body.targedId = targetUserId;
+        }
+
         const comment = await Comment.create(req.body,{transaction:t});
 
         // Notification
+        // Send notification to the post's owner
         const fromUser = connectedUserId
         const post = await comment.getPost({transaction:t})
         const toUser = post.userId
 
+
+        if(toUser!=connectedUserId && targetUserId == null){
         var notificationResult = await saveNotification(comment.id,toUser,fromUser,NotificationType.COMMENT,t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }
-
+      }
+        //  send notification to the target
+        if(targetUser && targetUserId != connectedUserId){
+          var notificationResult = await saveNotification(comment.id,targetUserId,fromUser,NotificationType.COMMENT,t);
+          if (!notificationResult.success) {
+            throw new Error(notificationResult.error);
+          }    
+         }
+         
+       
         return comment
 
       })
@@ -326,19 +358,53 @@ exports.updateComment = async (req, res) => {
 
 // Delete a comment
 exports.deleteComment = async (req, res) => {
-    try {
-        const comment = await Comment.findByPk(req.params.id);
-        if (!comment) {
-            return res.status(404).json({ error: "Comment not found" });
-        }
+  try {
+    // Start a transaction
+    await sequelize.transaction(async (t) => {
+      // Find the comment
+      const comment = await Comment.findByPk(req.params.id, { transaction: t });
+      
+      if (!comment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
 
-        await comment.destroy();
-        return res.status(200).json({ success: "Comment deleted!" });
-    } catch (error) {
-        return res.status(500).json({ error: error.toString() });
-    }
+      // Find all related notifications
+      const notifications = await Notification.findAll({
+        where: {
+          ressourceId: comment.id,
+          type: 'comment'
+        },
+        transaction: t  // Use the transaction in the query
+      });
+
+      // Delete all related notifications first
+      if (notifications.length > 0) {
+        await Notification.destroy({
+          where: {
+            ressourceId: comment.id,
+            type: 'comment'
+          },
+          transaction: t  // Include the transaction in the deletion
+        });
+      }
+
+      // Delete the comment
+      await comment.destroy({ transaction: t });
+
+      // Return success message if transaction completes
+      return res.status(200).json({ 
+        success: "Comment and related notifications deleted successfully!",
+        deletedNotificationsCount: notifications.length
+      });
+    });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    return res.status(500).json({ 
+      error: "Failed to delete comment and notifications",
+      details: error.toString()
+    });
+  }
 };
-
 
 exports.voteComment = async (req, res) => {
   const commentId = req.params.id;
@@ -365,11 +431,24 @@ exports.voteComment = async (req, res) => {
 
           // Increment the votes number of the comment
          var result = await comment.increment('like', { transaction: t});
-         var notificationResult = await saveNotification(comment.id,comment.userId,user.id,NotificationType.LIKE,t);
+         
+          // If the connected user like it's own comment , useless to send notification
+         if(comment.userId != userId){
+          var notificationResult = await saveNotification(comment.id,comment.userId,user.id,NotificationType.LIKE,t);
+          if (!notificationResult.success) {
+            throw new Error(notificationResult.error);
+          } 
+         }
 
-         if (!notificationResult.success) {
-          throw new Error(notificationResult.error);
-        } 
+
+
+        
+        const userLike = await UserLike.create({
+          ressourceType: 'comment', 
+          ressourceId: comment.id,        
+          userId: userId            
+        },{ transaction: t});
+
 
         return result
       
@@ -381,5 +460,56 @@ exports.voteComment = async (req, res) => {
       // Log the error and respond with a 500 status code
       console.error(error);
       return res.status(500).json({ error: 'An error occurred while processing your request' });
+  }
+};
+
+
+exports.unVoteComment = async (req, res) => {
+  const commentId = req.params.id;
+  const userId = req.user.id;
+
+  // Check if commentId and userId are provided
+  if (!commentId || !userId) {
+    return res.status(400).json({ error: 'Invalid request parameters' });
+  }
+
+  try {
+    // Use a transaction to ensure all database operations are atomic
+    const result = await sequelize.transaction(async (t) => {
+      // Find the comment based on the provided ID
+      const comment = await Comment.findByPk(commentId, { transaction: t });
+
+      // If the comment is not found, throw an error
+      if (!comment) {
+        throw new Error('Comment not found');
+      }
+
+      // Decrement the votes number of the comment
+      const updatedComment = await comment.decrement('like', { transaction: t });
+
+
+
+
+      await UserLike.destroy({
+        where: {
+            ressourceId: commentId
+        },
+        transaction: t
+    });
+    
+
+
+      // Optionally, handle notification logic if required
+      // For example, if you need to handle unliking notifications, you can do so here.
+
+      return updatedComment;
+    });
+
+    // Respond with the updated votes number
+    return res.status(200).json({ likeNumber: result.like });
+  } catch (error) {
+    // Log the error and respond with a 500 status code
+    console.error(error);
+    return res.status(500).json({ error: 'An error occurred while processing your request' });
   }
 };

@@ -45,13 +45,15 @@ exports.getRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts
     const preferredPostsQuery = {
       include: [
-        { model: Comment, attributes: ['id'] }
+        { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
       ],
       limit: limit + 1, // Fetch one extra record to determine if there's a next page
       where: {
         [Op.and]: [
           { tags: { [Op.overlap]: userPreferedTagsLibelle } },
           { isPublished: true },
+          { userId: { [Op.ne]: userId } },
           cursor ? { createdAt: { [Op.lt]: cursor } } : {}
         ]
       },
@@ -137,12 +139,16 @@ exports.getNotRecommandedTagsPost = async (req, res) => {
     // Construct the query for finding posts not matching user's preferred tags
     const noFollowedTagsPostQuery = {
       include: [
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] },
+
         { model: Comment, attributes: ['id'] },
       ],
       limit: limit+1,
       where: {
         [Op.and]: [
           { id: { [Op.notIn]: preferredPostIds } }, // Exclude preferred posts by ID
+          { userId: { [Op.ne]: userId } },
+
           { isPublished: true },
           cursor ? { createdAt: { [Op.lt]: cursor } } : {},
         ],
@@ -216,6 +222,8 @@ exports.getFollowedUserPost = async (req, res) => {
     const followedUserPostsQuery = {
       include: [
         { model: Comment, attributes: ['id'] },
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+
       ],
       limit: limit+1,
       where: {
@@ -286,7 +294,21 @@ exports.searchPostByTags = async (req, res) => {
 
     const whereClause = {
       [Op.and]: [
-        Sequelize.literal(`ARRAY_TO_STRING(tags, ',') ILIKE '%${tag}%'`),
+{
+          [Op.or]: [
+            Sequelize.literal(`ARRAY_TO_STRING(tags, ',') ILIKE '%${tag}%'`),
+
+            { title: 
+             { 
+              [Op.iLike]: `%${tag}%`
+             }  // Case-insensitive search for tag
+    
+             },
+        ]
+},
+
+
+
         { isPublished: true }
       ]
     };
@@ -296,6 +318,9 @@ exports.searchPostByTags = async (req, res) => {
     }
 
     const foundPosts = await Post.findAll({
+      include: [
+        { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+      ],
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: limit + 1 // Fetch one extra to determine if there are more results
@@ -323,11 +348,25 @@ exports.searchPostByTags = async (req, res) => {
 
 exports.getOnePost = async (req, res) => {
     try {
-        const post = await Post.findByPk(req.params.id);
+        const post = await Post.findByPk(req.params.id,{
+          include: [
+            { model: Comment, attributes: ['id'] },
+            { model: User, attributes: ['id','fullName','username','profilePicture','email','profession'] }
+    
+          ],
+        });
         if (!post) {
             return res.status(404).json({ error: "Post not found" });
         }
-        return res.status(200).json(post);
+
+        // Transform results to include the number of comments
+        const commentCount = post.Comments.length;
+        const { Comments, ...postData } = post.toJSON();
+        const postsWithNumberOfComments  = { ...postData, commentCount }
+
+
+
+        return res.status(200).json(postsWithNumberOfComments);
     } catch (error) {
         return res.status(500).json({ error: error.toString() });
     }
@@ -362,7 +401,7 @@ exports.addPost = async (req, res) => {
         post.headerImage = getMediaLink(coverImage)
       }
       post.content = await insertMediasIntoDocument(post.content,paths);
-      var response = Post.create(post)
+      var response = await Post.create(post)
 
             // Get the IDs of the user's followers
       const followers = await user.getFollowers({ 
@@ -371,9 +410,10 @@ exports.addPost = async (req, res) => {
       });
       const followerIds = followers.map(follower => follower.id);
 
+
       // Send notifications to followers
       if (followerIds.length > 0) {
-        const notificationResult = await saveBulkNotification(post.id, followerIds, user.id,NotificationType.POST, t);
+        const notificationResult = await saveBulkNotification(response.id, followerIds, user.id,NotificationType.POST, t);
         if (!notificationResult.success) {
           throw new Error(notificationResult.error);
         }

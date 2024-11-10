@@ -1,7 +1,6 @@
 const db = require("../../../db/models/index");
 const { Notification, User, Post, Comment } = db;
 const { Op } = require("sequelize");
-const { groupNotifications } = require("./notificationController");
 
 // Store connected clients
 const clients = new Map();
@@ -60,7 +59,7 @@ async function ungroupedNotificationCounter(userId) {
   return count;
 }
 
-exports.sendNotification = async (req, res) => {
+exports.connectToSseNotificationStream = async (req, res) => {
   var userId = req.user.id;
   
   // Set headers for SSE
@@ -70,8 +69,7 @@ exports.sendNotification = async (req, res) => {
     'Connection': 'keep-alive'
   });
 
-  // Send an initial message
-  res.write('data: Connected to notification stream\n\n');
+
 
   // Add this client to the map of connected clients
   clients.set(userId, res);
@@ -81,7 +79,7 @@ exports.sendNotification = async (req, res) => {
   res.write(`data: ${JSON.stringify(initialCount)}\n\n`);
 
   // Remove client when they disconnect
-  req.on('close', () => {
+  req.on("close", function() {
     clients.delete(userId);
-  });
+});
 };
