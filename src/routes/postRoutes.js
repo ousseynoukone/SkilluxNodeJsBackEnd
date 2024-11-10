@@ -7,6 +7,7 @@ const {
 } = require("../controllers/post/postCrudeController");
 const authenticateToken = require("../controllers/auth/middleware/authMiddleWare");
 const { votePost,unvotePost } = require("../controllers/post/postController");
+
 const { postAddingValidator, postUpdateValidator } = require('../controllers/validators/postValidators');
 
 // GET endpoints

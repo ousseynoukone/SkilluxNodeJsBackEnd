@@ -17,6 +17,7 @@ exports.getAllTopLevelComments = async (req, res) => {
     const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
     const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
 
+
     const result = await Comment.findAndCountAll({
       where: {
         postId: postId,
@@ -27,6 +28,7 @@ exports.getAllTopLevelComments = async (req, res) => {
           model: User,
           as: 'user', // Alias for the user who made the comment
           attributes: ['id', 'fullName', 'username', 'profilePicture'],
+
         },
         {
           model: Comment,
@@ -66,6 +68,147 @@ exports.getAllTopLevelComments = async (req, res) => {
 };
 
 
+
+exports.getAllParentsComments = async(req,res)=>{
+  const childCommentId = req.params.childCommentId;
+  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
+  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+  try {
+    const result = await sequelize.query(
+      `
+      WITH RECURSIVE cte AS (
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          0 AS "level",
+          ARRAY[c."id"] AS "path"
+        FROM comments c
+        WHERE  c."id" = :childCommentId
+
+        UNION ALL
+
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          cte."level" + 1 AS "level",
+          cte."path" || ARRAY[c."id"] AS "path"
+        FROM comments c
+        JOIN cte ON c."id" = cte."parentId"
+      )
+
+
+      SELECT
+        id,
+        text,
+        "isModified",
+        "createdAt",
+        "like",
+        (
+          SELECT COUNT(*)
+          FROM cte c1
+          WHERE c1."path" @> ARRAY[cte."id"]
+          AND c1."id" <> cte."id"
+        ) AS "ascendantCount"
+      FROM cte
+      WHERE "level" > 0 
+      ORDER BY level DESC
+      LIMIT :limit OFFSET :offset;
+
+      `,
+      {
+      replacements: {
+      childCommentId,
+      limit,
+      offset,
+      },
+      type: QueryTypes.SELECT,
+      }
+    );
+
+if (result.length === 0) {
+return res.status(404).json({ message: 'No comments found' });
+}
+
+return res.status(200).json(result);
+
+  } catch (error) {
+    return res.status(500).json({ error: error.toString() });
+
+  }
+
+}
+
+
+exports.getAllChildrenComments = async(req,res)=>{
+  const parentCommentId = req.params.parentCommentId;
+  const limit = parseInt(req.params.limit, 10) || 10; // Default limit is 10
+  const offset = parseInt(req.params.offset, 10) || 0; // Default offset is 0
+  try {
+    const result = await sequelize.query(
+      `
+      WITH RECURSIVE cte AS (
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          0 AS "level",
+          ARRAY[c."id"] AS "path"
+        FROM comments c
+        WHERE  c."parentId" = :parentCommentId
+
+        UNION ALL
+
+        SELECT
+          c."id",
+          c."text",
+          c."isModified",
+          c."createdAt",
+          c."like",
+          c."parentId",
+          cte."level" + 1 AS "level",
+          cte."path" || ARRAY[c."id"] AS "path"
+        FROM comments c
+        JOIN cte ON c."parentId" = cte."id"
+      )
+
+
+      SELECT
+        id,
+        text,
+        "isModified",
+        "createdAt",
+        "like",
+        (
+          SELECT COUNT(*)::int  
+          FROM cte c1
+          WHERE c1."path" @> ARRAY[cte."id"]
+          AND c1."id" <> cte."id"
+        ) AS "descendantCount"
+      FROM cte
+      WHERE "level" = 0 
+      LIMIT :limit OFFSET :offset;
+
+      `,
+      {
+      replacements: {
+      parentCommentId,
+      limit,
+      offset,
+      },
+      type: QueryTypes.SELECT,
+      }
+    );
 
 
 exports.getAllChildrenComments = async (req, res) => {  

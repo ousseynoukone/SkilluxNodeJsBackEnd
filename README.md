@@ -1,4 +1,4 @@
-# Skillux Mobile App
+# Skillux Mobile App (Back End - NODE JS)
 
 Skillux is a mobile application designed to connect learners and experts in various fields, facilitating knowledge sharing and skill development.
 
@@ -57,12 +57,11 @@ Swagger autogen used : You might have as well a glimpse of all endpoints and som
 
 1. Clone the repository
     https://github.com/ousseynoukone/SkilluxNodeJsBackEnd.git
-    https://github.com/ousseynoukone/skilluxfrontendflutter.git
-
-2. Install dependencies
+   
+3. Install dependencies
         npm install
 
-3. Install Sequelize CLI 
+4. Install Sequelize CLI 
         npm install -g sequelize-cli
 
 ### Database Setup
@@ -81,6 +80,13 @@ Swagger autogen used : You might have as well a glimpse of all endpoints and som
 
 4. (Optional) Seed the database
         npx sequelize-cli db:seed:all
+
+
+
+
+### FOR THE FRONT END REFER TO : https://github.com/ousseynoukone/skilluxfrontendflutter.git
+
+
 
 
 
