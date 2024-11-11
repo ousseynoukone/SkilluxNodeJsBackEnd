@@ -11,7 +11,7 @@
     }
   ],
   "paths": {
-    "/api/v1/auth/register/{lang}": {
+    "/auth/register/{lang}": {
       "post": {
         "description": "Register endpoint",
         "parameters": [
@@ -55,7 +55,7 @@
         }
       }
     },
-    "/api/v1/auth/login/{lang}": {
+    "/auth/login/{lang}": {
       "post": {
         "description": "Login endpoint",
         "parameters": [
@@ -107,7 +107,7 @@
         }
       }
     },
-    "/api/v1/auth/logout": {
+    "/auth/logout": {
       "get": {
         "description": "",
         "responses": {
@@ -129,7 +129,7 @@
         }
       }
     },
-    "/api/v1/auth/forgot-password": {
+    "/auth/forgot-password": {
       "post": {
         "description": "",
         "responses": {
@@ -159,7 +159,7 @@
         }
       }
     },
-    "/api/v1/auth/reset-password/{token}": {
+    "/auth/reset-password/{token}": {
       "get": {
         "description": "",
         "parameters": [
@@ -185,7 +185,7 @@
         }
       }
     },
-    "/api/v1/auth/reset-password": {
+    "/auth/reset-password": {
       "post": {
         "description": "",
         "responses": {
@@ -224,7 +224,7 @@
         }
       }
     },
-    "/api/v1/auth/change-password": {
+    "/auth/change-password": {
       "post": {
         "description": "",
         "responses": {
@@ -271,7 +271,7 @@
         }
       }
     },
-    "/api/v1/auth/refresh-token": {
+    "/auth/refresh-token": {
       "post": {
         "description": "",
         "responses": {
@@ -312,7 +312,7 @@
         }
       }
     },
-    "/api/v1/auth/account-activation/{token}": {
+    "/auth/account-activation/{token}": {
       "get": {
         "description": "",
         "parameters": [
@@ -338,7 +338,7 @@
         }
       }
     },
-    "/api/v1/auth/verify-email/{email}/{lang}": {
+    "/auth/verify-email/{email}/{lang}": {
       "get": {
         "description": "",
         "parameters": [
@@ -375,7 +375,7 @@
         }
       }
     },
-    "/api/v1/auth/deactivate-account/{userId}": {
+    "/auth/deactivate-account/{userId}": {
       "get": {
         "description": "",
         "parameters": [
@@ -407,7 +407,7 @@
         }
       }
     },
-    "/api/v1/auth/activate-account/{userId}": {
+    "/auth/activate-account/{userId}": {
       "get": {
         "description": "",
         "parameters": [
@@ -439,7 +439,7 @@
         }
       }
     },
-    "/api/v1/auth/delete-account": {
+    "/auth/delete-account": {
       "post": {
         "description": "",
         "responses": {
@@ -475,7 +475,7 @@
         }
       }
     },
-    "/api/v1/basic/followed-user-posts/{limit}/{cursor}": {
+    "/basic/followed-user-posts/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -515,7 +515,7 @@
         }
       }
     },
-    "/api/v1/basic/recommended-posts/{limit}/{cursor}": {
+    "/basic/recommended-posts/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -555,7 +555,7 @@
         }
       }
     },
-    "/api/v1/basic/random-posts/{limit}/{cursor}": {
+    "/basic/random-posts/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -595,7 +595,7 @@
         }
       }
     },
-    "/api/v1/basic/search-posts/{tag}/{limit}/{cursor}": {
+    "/basic/search-posts/{tag}/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -643,7 +643,7 @@
         }
       }
     },
-    "/api/v1/basic/posts/{id}": {
+    "/basic/posts/{id}": {
       "get": {
         "description": "",
         "parameters": [
@@ -738,7 +738,7 @@
         }
       }
     },
-    "/api/v1/basic/posts/vote/{id}": {
+    "/basic/posts/vote/{id}": {
       "post": {
         "description": "",
         "parameters": [
@@ -770,7 +770,39 @@
         }
       }
     },
-    "/api/v1/basic/posts": {
+    "/basic/posts/unvote/{id}": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/posts": {
       "post": {
         "description": "",
         "responses": {
@@ -799,7 +831,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "tags": {
+                  "userId": {
+                    "example": "any"
+                  },
+                  "headerImage": {
+                    "example": "any"
+                  },
+                  "content": {
                     "example": "any"
                   }
                 }
@@ -809,12 +847,12 @@
         }
       }
     },
-    "/api/v1/basic/tags": {
+    "/basic/tags": {
       "post": {
         "description": "",
         "responses": {
-          "200": {
-            "description": "OK"
+          "201": {
+            "description": "Created"
           },
           "401": {
             "description": "Unauthorized"
@@ -862,7 +900,7 @@
         }
       }
     },
-    "/api/v1/basic/tags/{id}": {
+    "/basic/tags/{id}": {
       "get": {
         "description": "",
         "parameters": [
@@ -957,7 +995,7 @@
         }
       }
     },
-    "/api/v1/basic/post-top-level-comments/{postId}/{limit}/{offset}": {
+    "/basic/post-top-level-comments/{postId}/{limit}/{offset}": {
       "get": {
         "description": "",
         "parameters": [
@@ -996,16 +1034,13 @@
           "403": {
             "description": "Forbidden"
           },
-          "404": {
-            "description": "Not Found"
-          },
           "500": {
             "description": "Internal Server Error"
           }
         }
       }
     },
-    "/api/v1/basic/children_comments/{parentCommentId}/{limit}/{offset}": {
+    "/basic/children_comments/{parentCommentId}/{limit}/{offset}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1053,55 +1088,7 @@
         }
       }
     },
-    "/api/v1/basic/parents_comments/{childCommentId}/{limit}/{offset}": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "childCommentId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/v1/basic/comments/{id}": {
+    "/basic/comments/{id}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1196,7 +1183,7 @@
         }
       }
     },
-    "/api/v1/basic/comments": {
+    "/basic/comments": {
       "post": {
         "description": "",
         "responses": {
@@ -1225,7 +1212,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "targetId": {
+                    "example": "any"
+                  },
                   "userId": {
+                    "example": "any"
+                  },
+                  "targedId": {
                     "example": "any"
                   }
                 }
@@ -1235,7 +1228,7 @@
         }
       }
     },
-    "/api/v1/basic/comments/vote/{id}": {
+    "/basic/comments/vote/{id}": {
       "post": {
         "description": "",
         "parameters": [
@@ -1267,7 +1260,39 @@
         }
       }
     },
-    "/api/v1/basic/post_moderations/{postId}": {
+    "/basic/comments/unvote/{id}": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/post_moderations/{postId}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1299,7 +1324,7 @@
         }
       }
     },
-    "/api/v1/basic/moderations/{id}": {
+    "/basic/moderations/{id}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1414,7 +1439,7 @@
         }
       }
     },
-    "/api/v1/basic/moderations": {
+    "/basic/moderations": {
       "post": {
         "description": "",
         "responses": {
@@ -1456,7 +1481,7 @@
         }
       }
     },
-    "/api/v1/basic/notifications/{limit}/{cursor}": {
+    "/basic/notifications/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1493,7 +1518,7 @@
         }
       }
     },
-    "/api/v1/basic/sse-notifications/": {
+    "/basic/sse-notifications/": {
       "get": {
         "description": "",
         "responses": {
@@ -1506,7 +1531,96 @@
         }
       }
     },
-    "/api/v1/basic/update_user_preferences": {
+    "/basic/update-user": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": {
+                    "example": "any"
+                  },
+                  "email": {
+                    "example": "any"
+                  },
+                  "profession": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/basic/remove-user-profile-picture": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/update-user-profile-picture": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/update_user_preferences": {
       "post": {
         "description": "",
         "responses": {
@@ -1521,6 +1635,9 @@
           },
           "404": {
             "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1542,9 +1659,19 @@
         }
       }
     },
-    "/api/v1/basic/users": {
+    "/basic/users/{userId}": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1564,9 +1691,80 @@
         }
       }
     },
-    "/api/v1/basic/users/followers": {
+    "/basic/users/post/{limit}/{cursor}/{userId}": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/basic/users/followers/{limit}/{cursor}/{userId}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1586,9 +1784,35 @@
         }
       }
     },
-    "/api/v1/basic/users/following": {
+    "/basic/users/following/{limit}/{cursor}/{userId}": {
       "get": {
         "description": "",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1608,51 +1832,7 @@
         }
       }
     },
-    "/api/v1/basic/users/nb_followers": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/v1/basic/users/nb_following": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/api/v1/basic/search-users/{username}/{limit}/{cursor}": {
+    "/basic/search-users/{username}/{limit}/{cursor}": {
       "get": {
         "description": "",
         "parameters": [
@@ -1700,7 +1880,7 @@
         }
       }
     },
-    "/api/v1/basic/users/follow/{id}": {
+    "/basic/users/follow/{id}": {
       "post": {
         "description": "",
         "parameters": [
@@ -1735,7 +1915,7 @@
         }
       }
     },
-    "/api/v1/basic/users/unfollow/{id}": {
+    "/basic/users/unfollow/{id}": {
       "post": {
         "description": "",
         "parameters": [
@@ -1751,6 +1931,76 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/users/is-follower/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/basic/user-likes-ids/{ressourceType}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "ressourceType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "401": {
             "description": "Unauthorized"
