@@ -37,7 +37,7 @@ app.use(cors({
 
 
 
-const BASE_ENDPOINT = (process.env.BASE_ENDPOINT && process.env.BASE_ENDPOINT.trim() !== "") ? process.env.BASE_ENDPOINT : "/api/v1";
+const BASE_ENDPOINT = "/api/v1";
 
 // Serve static files from the "medias" directory
 app.use(BASE_ENDPOINT+'/medias', express.static(path.join(__dirname, 'medias')));

@@ -1,0 +1,37 @@
+
+services:
+  db:
+    image: postgres:15.15-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skilluxdb
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "5050:5050"
+    environment:
+      NODE_ENV: development
+      PORT: 5050
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: skilluxdb
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+    env_file:
+      - .env
+    volumes:
+      - ./medias:/usr/src/app/medias
+    command: [ "npm", "run", "start" ]
+
+volumes:
+  db-data:
